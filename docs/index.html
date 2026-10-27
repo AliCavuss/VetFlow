@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VetFlow – Live Demo</title>
+<meta name="description" content="Live browser demo of VetFlow – a .NET / ASP.NET Core MVC portfolio project by Ali Çavuş.">
+<style>body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: clinic app shell – sidebar + work area, same look as the ASP.NET app; stacks to a top bar on phones. Single light look by design. */
+:root {
+  color-scheme: light;
+  --bg: #f4f6f3;
+  --surface: #ffffff;
+  --surface-2: #eef2ee;
+  --border: #dfe6e0;
+  --text: #1c2a23;
+  --muted: #63736b;
+  --primary: #2f6f4f;
+  --primary-dark: #24583e;
+  --primary-soft: #e3efe8;
+  --accent: #e8a33d;
+  --accent-soft: #fbf0dd;
+  --danger: #c2412d;
+  --danger-soft: #fbe3df;
+  --info: #2563a8;
+  --info-soft: #e0ebf8;
+  --ok-soft: #dcf3e4;
+  --font: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 var(--font); font-variant-numeric: tabular-nums; }
+a { color: var(--primary); text-decoration: none; cursor: pointer; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+.banner { background: var(--accent-soft); border-bottom: 1px solid #efd9b3; padding-block: .45rem; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); font-size: .82rem; }
+.shell { display: flex; min-height: calc(100% - 34px); }
+.sidebar { width: 226px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); padding: 1.1rem .75rem; display: flex; flex-direction: column; gap: 2px; }
+.brand { display: flex; align-items: center; gap: .55rem; font-size: 1.2rem; padding: 0 .5rem 1rem; }
+.brand strong { color: var(--primary); }
+.mark { width: 30px; height: 30px; border-radius: 9px; background: var(--primary); color: #fff; display: grid; place-items: center; font-weight: 800; }
+.nav { display: flex; align-items: center; gap: .6rem; width: 100%; text-align: left; border: 0; background: none; padding: .55rem .75rem; border-radius: .6rem; color: var(--muted); font-weight: 500; cursor: pointer; }
+.nav:hover { background: var(--surface-2); color: var(--text); }
+.nav[aria-current="page"] { background: var(--primary-soft); color: var(--primary-dark); font-weight: 700; }
+.role { margin-top: auto; border-top: 1px solid var(--border); padding: .9rem .5rem 0; font-size: .8rem; color: var(--muted); display: grid; gap: .35rem; }
+.role select { width: 100%; border: 1px solid var(--border); border-radius: .5rem; padding: .35rem .5rem; background: var(--surface); }
+main { flex: 1; min-width: 0; padding-block: 1.5rem 3rem; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+@media (min-width: 900px) { main { padding-left: 2rem; padding-right: 2rem; } }
+@media (max-width: 899px) {
+  .shell { flex-direction: column; }
+  .sidebar { width: 100%; flex-direction: row; flex-wrap: wrap; align-items: center; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .brand { width: 100%; padding-bottom: .4rem; }
+  .nav { width: auto; padding: .4rem .6rem; }
+  .role { width: 100%; margin-top: .4rem; padding-top: .5rem; }
+}
+
+.head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.3rem; }
+h1 { font-size: 1.6rem; font-weight: 800; margin: 0; letter-spacing: -.01em; text-wrap: balance; }
+h2 { font-size: 1rem; font-weight: 700; margin: 0; }
+.eyebrow { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+.muted { color: var(--muted); }
+.small { font-size: .82rem; }
+.crumbs { font-size: .84rem; color: var(--muted); margin-bottom: .5rem; }
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1rem 1.15rem; min-width: 0; }
+.panel.flush { padding: 0; overflow: hidden; }
+.panel.tint { background: var(--primary-soft); border-color: #c9ddd0; }
+.panel-head { display: flex; justify-content: space-between; align-items: center; gap: .5rem; margin-bottom: .75rem; flex-wrap: wrap; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 1.2rem; align-items: start; }
+@media (max-width: 1100px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
+.stack { display: grid; gap: 1.2rem; }
+
+.btn { display: inline-flex; align-items: center; gap: .35rem; border: 1px solid var(--border); background: var(--surface); padding: .42rem .8rem; border-radius: .5rem; font-weight: 600; font-size: .85rem; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--primary); color: var(--primary); }
+.btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.btn.primary:hover { background: var(--primary-dark); color: #fff; }
+.btn.ok { background: #2e8a52; border-color: #2e8a52; color: #fff; }
+.btn.danger { color: var(--danger); border-color: #efc2b9; }
+.btn.sm { padding: .22rem .55rem; font-size: .78rem; }
+.btn.link { border: 0; background: none; padding: 0; color: var(--danger); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.badge { display: inline-block; font-size: .72rem; font-weight: 700; border-radius: .4rem; padding: .12rem .45rem; white-space: nowrap; }
+.b-primary { background: var(--primary-soft); color: var(--primary-dark); }
+.b-ok { background: var(--ok-soft); color: #1f6b3d; }
+.b-warn { background: var(--accent-soft); color: #8a5a10; }
+.b-danger { background: var(--danger-soft); color: #9b2c1c; }
+.b-info { background: var(--info-soft); color: #1e4f86; }
+.b-muted { background: #e9ecea; color: #4a5751; }
+
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: .9rem; margin-bottom: 1.3rem; }
+.kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: .9rem 1.05rem; }
+.kpi-label { font-size: .74rem; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+.kpi-value { font-size: 1.55rem; font-weight: 800; line-height: 1.3; }
+.kpi-sub { font-size: .8rem; color: var(--muted); }
+
+.chips { display: flex; gap: .4rem; flex-wrap: wrap; }
+.chip { display: inline-flex; align-items: center; gap: .35rem; border: 1px solid var(--border); background: var(--surface); border-radius: 999px; padding: .28rem .75rem; font-size: .84rem; font-weight: 500; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: #fff; }
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+
+.list { list-style: none; margin: 0; padding: 0; }
+.list > li { display: flex; justify-content: space-between; align-items: center; gap: .7rem; padding: .6rem 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.list > li:last-child { border-bottom: 0; }
+.sched > li { display: grid; grid-template-columns: 3.6rem 4px minmax(0, 1fr) auto; gap: .75rem; align-items: center; padding: .65rem 0; border-bottom: 1px solid var(--border); }
+.sched > li:last-child { border-bottom: 0; }
+.sched .t { font-weight: 800; font-size: 1.02rem; line-height: 1.1; }
+.sched .t span { display: block; font-size: .72rem; font-weight: 500; color: var(--muted); }
+.sched .bar { width: 4px; align-self: stretch; border-radius: 4px; }
+.sched .act { display: flex; gap: .3rem; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+@media (max-width: 600px) { .sched > li { grid-template-columns: 3.2rem 4px minmax(0, 1fr); } .sched .act { grid-column: 3; justify-content: flex-start; } }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: .6rem .9rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+th { font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); background: var(--surface-2); font-weight: 700; white-space: nowrap; }
+tbody tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: right; white-space: nowrap; }
+
+/* calendar */
+.cal-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; }
+.cal { display: grid; grid-template-columns: 52px repeat(6, minmax(130px, 1fr)); min-width: 840px; --hp: 76px; }
+.cal-hd { padding: .5rem .6rem; border-bottom: 1px solid var(--border); border-left: 1px solid var(--border); display: flex; gap: .35rem; align-items: baseline; }
+.cal-hd span { font-size: .75rem; color: var(--muted); text-transform: uppercase; }
+.cal-hd strong { font-size: 1.1rem; }
+.cal-hd.today strong { background: var(--primary); color: #fff; border-radius: 999px; padding: 0 .45rem; }
+.cal-gut div { height: var(--hp); font-size: .7rem; color: var(--muted); text-align: right; padding-right: .35rem; transform: translateY(-.45rem); }
+.cal-day { position: relative; height: calc(var(--hp) * 10); border-left: 1px solid var(--border); background-image: repeating-linear-gradient(to bottom, var(--border) 0 1px, transparent 1px calc(var(--hp) / 2)); }
+.ev { position: absolute; left: 3px; right: 3px; border-radius: 7px; padding: .15rem .4rem; font-size: .72rem; line-height: 1.25; overflow: hidden; border: 0; border-left: 4px solid var(--vet); background: color-mix(in srgb, var(--vet) 14%, #fff); text-align: left; cursor: pointer; }
+.ev:hover { box-shadow: 0 4px 12px rgba(0,0,0,.12); z-index: 2; }
+.ev b { margin-right: .25rem; }
+.ev.checkedin { outline: 2px solid var(--accent); }
+.ev.inprogress { outline: 2px solid var(--info); }
+.ev.completed { opacity: .55; }
+
+/* patient */
+.hero { display: flex; gap: 1.1rem; align-items: flex-start; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.1rem 1.3rem; margin-bottom: 1rem; }
+.avatar { width: 64px; height: 64px; border-radius: 18px; display: grid; place-items: center; font-weight: 800; font-size: 1.8rem; background: var(--primary-soft); color: var(--primary-dark); flex-shrink: 0; }
+.avatar.cat { background: var(--accent-soft); color: #8a5a10; }
+.avatar.sm { width: 36px; height: 36px; border-radius: 11px; font-size: 1rem; }
+.facts { display: flex; gap: .3rem 1.1rem; flex-wrap: wrap; color: var(--muted); }
+.allergy { display: flex; gap: .6rem; align-items: center; background: #fff4e5; border: 1px solid #f3c98b; color: #7a4a06; border-radius: 12px; padding: .6rem .9rem; margin-bottom: 1rem; }
+.allergy::before { content: "!"; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff; font-weight: 800; display: grid; place-items: center; flex-shrink: 0; }
+.history > li { display: grid; grid-template-columns: 5.4rem minmax(0, 1fr); gap: .9rem; padding: .7rem 0; border-bottom: 1px solid var(--border); }
+.history > li:last-child { border-bottom: 0; }
+
+/* forms */
+.field { display: grid; gap: .25rem; min-width: 0; }
+.field label { font-size: .8rem; font-weight: 600; }
+input[type="text"], input[type="number"], select, textarea { width: 100%; border: 1px solid var(--border); border-radius: .5rem; padding: .42rem .6rem; background: var(--surface); }
+textarea { resize: vertical; }
+input:disabled, textarea:disabled { background: var(--surface-2); }
+.row3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .7rem; }
+.soap { display: grid; gap: .7rem; margin-top: .7rem; }
+.addrow { display: flex; gap: .45rem; margin-top: .7rem; }
+.addrow select { flex: 1; min-width: 0; }
+.addrow input { width: 5.5rem; flex-shrink: 0; }
+.err { color: var(--danger); font-size: .82rem; min-height: 1.1em; }
+
+/* invoice */
+.totals { margin-left: auto; max-width: 360px; display: grid; gap: .3rem; margin-top: .8rem; }
+.totals > div { display: flex; justify-content: space-between; gap: 1rem; }
+.totals .grand { border-top: 2px solid var(--text); padding-top: .35rem; font-weight: 800; font-size: 1.1rem; }
+
+.toasts { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); display: grid; gap: .5rem; z-index: 30; width: min(340px, calc(100% - 32px)); }
+.toast { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--primary); border-radius: .6rem; padding: .6rem .8rem; box-shadow: 0 8px 24px rgba(0,0,0,.12); font-size: .85rem; animation: in .25s ease-out; }
+.toast.error { border-left-color: var(--danger); }
+@keyframes in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+</head>
+<body>
+<div class="banner"><strong>Live demo.</strong> <span>VetFlow itself is an ASP.NET Core MVC + SQL Server application – this page reproduces its screens and business rules in your browser with sample data (nothing is saved). <a href="https://github.com/AliCavuss/VetFlow" style="color:inherit;text-decoration:underline">Source code &amp; setup on GitHub</a></span></div>
+
+<div class="shell">
+  <aside class="sidebar" aria-label="Main navigation">
+    <div class="brand"><span class="mark">+</span><span>Vet<strong>Flow</strong></span></div>
+    <button class="nav" id="nav-today" data-view="today">Today</button>
+    <button class="nav" id="nav-calendar" data-view="calendar">Calendar</button>
+    <button class="nav" id="nav-patients" data-view="patients">Patients</button>
+    <button class="nav" id="nav-invoices" data-view="invoices">Invoices</button>
+    <button class="nav" id="nav-inventory" data-view="inventory">Inventory</button>
+    <div class="role">
+      <label for="role">Signed in as</label>
+      <select id="role">
+        <option value="Veterinarian">Dr. Elif Kaya – Veterinarian</option>
+        <option value="Receptionist">Ayşe Yıldız – Receptionist</option>
+        <option value="Admin">Clinic Manager – Admin</option>
+      </select>
+      <span id="role-hint"></span>
+    </div>
+  </aside>
+  <main id="view"></main>
+</div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+  // ---------- helpers ----------
+  const $ = (s, r = document) => r.querySelector(s);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const tl = n => new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n) + ' ₺';
+  const pct = r => '%' + (r * 100).toLocaleString('tr-TR', { maximumFractionDigits: 2 });
+  const r2 = n => Math.round((n + Number.EPSILON) * 100) / 100;
+  const pad = n => String(n).padStart(2, '0');
+  const hm = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  const dmy = d => d ? `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}` : '—';
+  const addMin = (d, m) => new Date(d.getTime() + m * 60000);
+  const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+  const startOfDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const now = new Date();
+  const today = startOfDay(now);
+  let role = 'Veterinarian';
+  const isClinical = () => role !== 'Receptionist';
+  const isBilling = () => role !== 'Veterinarian';
+  function toast(msg, error) { const el = document.createElement('div'); el.className = 'toast' + (error ? ' error' : ''); el.textContent = msg; $('#toasts').appendChild(el); setTimeout(() => el.remove(), 5000); }
+  class DomainError extends Error {}
+  function attempt(fn) { try { fn(); render(); } catch (e) { if (e instanceof DomainError) toast(e.message, true); else throw e; } }
+
+  // ---------- reference data (same demo set as DbSeeder.cs) ----------
+  const vets = [
+    { id: 1, name: 'Dr. Elif Kaya', spec: 'Internal medicine', color: '#2f6f4f' },
+    { id: 2, name: 'Dr. Mert Demir', spec: 'Soft tissue surgery', color: '#7c4dbe' },
+    { id: 3, name: 'Dr. Zeynep Arslan', spec: 'Exotic animals', color: '#2563a8' }
+  ];
+  const owners = [
+    { id: 1, name: 'Ahmet Yılmaz', phone: '+90 532 411 27 90' }, { id: 2, name: 'Selin Çelik', phone: '+90 533 208 15 44' },
+    { id: 3, name: 'Burak Şahin', phone: '+90 542 670 33 12' }, { id: 4, name: 'Ece Öztürk', phone: '+90 505 913 48 26' },
+    { id: 5, name: 'Murat Aydın', phone: '+90 216 345 67 89' }, { id: 6, name: 'Gizem Polat', phone: '+90 530 655 21 38' },
+    { id: 7, name: 'Nazlı Tekin', phone: '+90 538 447 58 02' }
+  ];
+  const pets = [
+    { id: 1, owner: 1, name: 'Karabaş', species: 'Dog', breed: 'Kangal', sex: '♂ Male', age: '7 y 5 m', kg: 48.5, chip: '792097000123456' },
+    { id: 2, owner: 1, name: 'Pamuk', species: 'Cat', breed: 'Turkish Angora', sex: '♀ Female, spayed', age: '5 y 7 m', kg: 3.9, chip: '792097000123457' },
+    { id: 3, owner: 2, name: 'Mia', species: 'Cat', breed: 'British Shorthair', sex: '♀ Female, spayed', age: '4 y 2 m', kg: 4.6, chip: '792097000223310', allergy: 'Penicillin (skin reaction)' },
+    { id: 4, owner: 3, name: 'Rocky', species: 'Dog', breed: 'Golden Retriever', sex: '♂ Male, neutered', age: '6 y 8 m', kg: 32.1, chip: '981020004417721' },
+    { id: 5, owner: 4, name: 'Tarçın', species: 'Cat', breed: 'Domestic shorthair', sex: '♀ Female, spayed', age: '12 y 1 m', kg: 3.2, chip: '792097000331208' },
+    { id: 6, owner: 5, name: 'Zeus', species: 'Dog', breed: 'German Shepherd', sex: '♂ Male', age: '8 y 11 m', kg: 38.0, chip: '792097000441902', allergy: 'NSAID sensitivity (vomiting)' },
+    { id: 7, owner: 6, name: 'Bella', species: 'Dog', breed: 'Maltese', sex: '♀ Female, spayed', age: '5 y 8 m', kg: 3.1, chip: '981020004418803' },
+    { id: 8, owner: 7, name: 'Max', species: 'Dog', breed: 'Beagle', sex: '♂ Male, neutered', age: '4 y 7 m', kg: 12.8, chip: '981020004419964', allergy: 'Chicken protein (food allergy)' }
+  ];
+  const ownerOf = p => owners.find(o => o.id === p.owner);
+  const pet = id => pets.find(p => p.id === id);
+  const vet = id => vets.find(v => v.id === id);
+
+  let pid = 0;
+  const P = (sku, name, cat, unit, price, vat, stock = null, reorder = 0) => ({ id: ++pid, sku, name, cat, unit, price, vat, stock, reorder, moves: stock == null ? [] : [{ at: addDays(today, -60), qty: stock, type: 'Purchase', ref: 'Opening stock' }] });
+  const products = [
+    P('SRV-EXAM', 'General examination', 'Service', 'session', 850, .20), P('SRV-CTRL', 'Follow-up examination', 'Service', 'session', 450, .20),
+    P('SRV-VACC', 'Vaccine administration', 'Service', 'session', 250, .20), P('SRV-XRAY', 'X-ray (2 views)', 'Service', 'study', 1600, .20),
+    P('SRV-CBC', 'Complete blood count', 'Service', 'test', 950, .20),
+    P('MED-AMOX', 'Amoxicillin/clavulanate 250 mg', 'Medication', 'tablet', 18, .10, 240, 60),
+    P('MED-MELOX', 'Meloxicam oral suspension 1.5 mg/ml', 'Medication', 'bottle', 320, .10, 14, 5),
+    P('MED-FLEA', 'Flea & tick spot-on (dog 10–20 kg)', 'Medication', 'pipette', 420, .10, 8, 10),
+    P('VAC-RAB', 'Rabies vaccine', 'Vaccine', 'dose', 380, .10, 40, 15),
+    P('VAC-FVRCP', 'FVRCP combination vaccine (cat)', 'Vaccine', 'dose', 480, .10, 6, 10),
+    P('SUP-CONE', 'Recovery cone (M)', 'Supply', 'pcs', 180, .20, 3, 5),
+    P('FOOD-GI', 'Gastrointestinal diet – dog 4 kg', 'Food', 'bag', 1890, .20, 5, 4)
+  ];
+  const product = id => products.find(p => p.id === id);
+  const low = p => p.stock != null && p.stock <= p.reorder;
+
+  // ---------- calendar (week of today, Mon–Sat, 09:00–19:00, no overlaps) ----------
+  const monday = addDays(today, -((today.getDay() + 6) % 7));
+  const reasons = [['Vaccination', 'Annual booster', 15], ['Check-up', 'Itchy skin', 30], ['Follow-up', 'Suture removal', 15], ['Check-up', 'Not eating well', 30], ['Dental', 'Dental check', 60], ['Check-up', 'Senior health check', 30], ['Emergency', 'Ate chocolate', 30]];
+  let seed = 7; const rnd = n => { seed = (seed * 9301 + 49297) % 233280; return Math.floor(seed / 233280 * n); };
+  let aid = 0;
+  const appts = [];
+  for (let d = 0; d < 6; d++) {
+    const day = addDays(monday, d);
+    vets.forEach(v => {
+      let cur = addMin(new Date(day.getFullYear(), day.getMonth(), day.getDate(), 9, 0), 15 * rnd(4));
+      const count = v.id === 3 ? 1 + rnd(2) : 3 + rnd(4);
+      for (let i = 0; i < count; i++) {
+        const [type, reason, dur] = reasons[rnd(reasons.length)];
+        const end = addMin(cur, dur);
+        if (end.getHours() * 60 + end.getMinutes() > 19 * 60 || end.getDate() !== cur.getDate()) break;
+        const p = pets[rnd(pets.length)];
+        const a = { id: ++aid, pet: p.id, vet: v.id, start: cur, end: addMin(cur, dur), type, reason, status: 'Scheduled', visit: null };
+        if (a.end <= now) a.status = 'Completed';
+        else if (startOfDay(cur).getTime() === today.getTime() && cur <= addMin(now, 45)) a.status = 'Checked in';
+        appts.push(a);
+        cur = addMin(cur, dur + 15 * rnd(5));
+      }
+    });
+  }
+  // Make sure today shows something to work with, even outside opening hours.
+  if (!appts.some(a => a.status === 'Checked in' && a.vet === 1)) {
+    const t = new Date(Math.max(now.getTime(), new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9).getTime()));
+    appts.push({ id: ++aid, pet: 1, vet: 1, start: t, end: addMin(t, 30), type: 'Check-up', reason: 'Scratching ears', status: 'Checked in', visit: null, demo: true });
+  }
+  const statusBadge = s => ({ 'Scheduled': 'b-primary', 'Checked in': 'b-warn', 'In progress': 'b-info', 'Completed': 'b-ok', 'Cancelled': 'b-muted', 'No-show': 'b-danger' }[s]);
+
+  // ---------- visits & invoices ----------
+  let vid = 0, iid = 0, invoiceSeq = 41;
+  const visits = [];
+  const invoices = [];
+  const history = {
+    1: [{ date: addDays(today, -95), title: 'Soft tissue strain, right stifle. No fracture on X-ray.', vet: 2, plan: 'Meloxicam 5 days, restricted exercise 2 weeks.' },
+        { date: addDays(today, -300), title: 'Healthy. Body condition score 5/9.', vet: 1, plan: 'Booster due in 12 months.' }],
+    3: [{ date: addDays(today, -40), title: 'Otitis externa (bilateral).', vet: 1, plan: 'Ear cleaning twice daily, recheck in 10 days.' }]
+  };
+  const vaccines = { 1: [['Rabies', -352], ['DHPPi+L', -380]], 2: [['Rabies', -120], ['FVRCP', -120]], 3: [['FVRCP', -340]], 4: [['Rabies', -20]] };
+
+  function startVisit(a) {
+    if (!isClinical()) throw new DomainError('Only veterinarians can start an examination.');
+    if (a.visit) return a.visit;
+    if (!['Scheduled', 'Checked in'].includes(a.status)) throw new DomainError(`An appointment that is '${a.status}' cannot be started.`);
+    a.status = 'In progress';
+    const v = { id: ++vid, appt: a.id, pet: a.pet, vet: a.vet, start: new Date(), open: true, weight: pet(a.pet).kg, temp: '', hr: '', s: a.reason, o: '', a: '', p: '', items: [], vaccines: [] };
+    visits.push(v); a.visit = v.id; return v.id;
+  }
+  function addItem(v, prod, qty) {
+    if (!v.open) throw new DomainError('This visit is closed and can no longer be changed.');
+    if (!(qty > 0)) throw new DomainError('Quantity must be greater than zero.');
+    if (prod.stock != null && prod.stock < qty) throw new DomainError(`Not enough '${prod.name}' in stock: ${prod.stock} ${prod.unit} available, ${qty} requested.`);
+    if (prod.stock != null) { prod.stock -= qty; prod.moves.unshift({ at: new Date(), qty: -qty, type: 'Usage', ref: `Visit #${v.id}` }); }
+    v.items.push({ id: Date.now() + Math.random(), prod: prod.id, desc: prod.name, qty, price: prod.price, vat: prod.vat });
+  }
+  function removeItem(v, itemId) {
+    const it = v.items.find(i => i.id === itemId); const prod = product(it.prod);
+    if (prod.stock != null) { prod.stock += it.qty; prod.moves.unshift({ at: new Date(), qty: it.qty, type: 'Usage reversed', ref: `Visit #${v.id}` }); }
+    v.items = v.items.filter(i => i !== it);
+  }
+  function closeVisit(v) {
+    if (!v.a.trim()) throw new DomainError('Enter an assessment (diagnosis) before closing the visit.');
+    v.open = false; v.closed = new Date();
+    const a = appts.find(x => x.id === v.appt); if (a) a.status = 'Completed';
+    if (!v.items.length) return null;
+    const inv = { id: ++iid, number: null, owner: pet(v.pet).owner, visit: v.id, created: new Date(), status: 'Draft', discount: 0, lines: v.items.map(i => ({ ...i })), payments: [] };
+    invoices.push(inv); return inv.id;
+  }
+  const lineNet = l => r2(l.qty * l.price);
+  const subtotal = i => r2(i.lines.reduce((s, l) => s + lineNet(l), 0));
+  const discountAmt = i => r2(subtotal(i) * i.discount);
+  const vatTotal = i => r2(i.lines.reduce((s, l) => s + r2(lineNet(l) * (1 - i.discount) * l.vat), 0));
+  const total = i => r2(subtotal(i) - discountAmt(i) + vatTotal(i));
+  const paid = i => r2(i.payments.reduce((s, p) => s + p.amount, 0));
+  const balance = i => r2(total(i) - paid(i));
+  const breakdown = i => [...new Set(i.lines.map(l => l.vat))].sort((a, b) => b - a).map(rate => {
+    const ls = i.lines.filter(l => l.vat === rate);
+    return { rate, base: r2(ls.reduce((s, l) => s + lineNet(l), 0) * (1 - i.discount)), vat: r2(ls.reduce((s, l) => s + r2(lineNet(l) * (1 - i.discount) * rate), 0)) };
+  });
+  const invBadge = s => ({ 'Draft': 'b-muted', 'Issued': 'b-primary', 'Partially paid': 'b-warn', 'Paid': 'b-ok', 'Cancelled': 'b-danger' }[s]);
+  // A few historic invoices so the list is not empty.
+  [[1, 'General examination', 850, .20, 'Paid', -12], [2, 'Dental scaling & polishing', 3500, .20, 'Partially paid', -6], [5, 'Complete blood count', 950, .20, 'Issued', -20]].forEach(([o, d, pr, vat, st, ago]) => {
+    const inv = { id: ++iid, number: `VF-${today.getFullYear()}-${String(++invoiceSeq).padStart(5, '0')}`, owner: o, visit: null, created: addDays(today, ago), issued: addDays(today, ago), due: addDays(today, ago + 14), status: st, discount: 0, lines: [{ desc: d, qty: 1, price: pr, vat }], payments: [] };
+    if (st === 'Paid') inv.payments.push({ amount: total(inv), method: 'Credit card', at: inv.issued });
+    if (st === 'Partially paid') inv.payments.push({ amount: 2000, method: 'Cash', at: inv.issued });
+    invoices.push(inv);
+  });
+
+  // ---------- router ----------
+  let cur = { view: 'today', id: null }, vetFilter = 1;
+  function go(view, id = null) { cur = { view, id }; render(); window.scrollTo(0, 0); }
+  document.querySelectorAll('.nav').forEach(b => b.addEventListener('click', () => go(b.dataset.view)));
+  $('#role').addEventListener('change', e => { role = e.target.value; vetFilter = role === 'Veterinarian' ? 1 : 0; render(); toast(`Now viewing as ${role}.`); });
+
+  function render() {
+    const navFor = { today: 'today', calendar: 'calendar', appt: 'calendar', patients: 'patients', patient: 'patients', visit: 'patients', invoices: 'invoices', invoice: 'invoices', inventory: 'inventory' };
+    document.querySelectorAll('.nav').forEach(b => b.dataset.view === navFor[cur.view] ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current'));
+    $('#role-hint').textContent = role === 'Veterinarian' ? 'Can write medical records' : role === 'Receptionist' ? 'Can issue invoices and take payments' : 'Full access';
+    const v = $('#view');
+    v.innerHTML = ({ today: vToday, calendar: vCalendar, appt: vAppt, patients: vPatients, patient: vPatient, visit: vVisit, invoices: vInvoices, invoice: vInvoice, inventory: vInventory })[cur.view]();
+    bind(v);
+  }
+
+  // ---------- views ----------
+  const vetChips = () => `<div class="chips" role="group" aria-label="Veterinarian filter"><button class="chip" data-vetf="0" aria-pressed="${vetFilter === 0}">All vets</button>${vets.map(v => `<button class="chip" data-vetf="${v.id}" aria-pressed="${vetFilter === v.id}"><span class="dot" style="background:${v.color}"></span>${v.name}</button>`).join('')}</div>`;
+  function actions(a) {
+    let h = '';
+    if (a.status === 'Scheduled') h += `<button class="btn sm" data-checkin="${a.id}">Check in</button>`;
+    if (['Scheduled', 'Checked in'].includes(a.status)) h += `<button class="btn sm primary" data-start="${a.id}" ${isClinical() ? '' : 'disabled title="Veterinarians only"'}>Start exam</button>`;
+    if (a.visit) h += `<button class="btn sm" data-go="visit" data-id="${a.visit}">Record</button>`;
+    return h;
+  }
+  function vToday() {
+    const list = appts.filter(a => startOfDay(a.start).getTime() === today.getTime() && (!vetFilter || a.vet === vetFilter)).sort((a, b) => a.start - b.start);
+    const open = invoices.filter(i => ['Issued', 'Partially paid'].includes(i.status));
+    const lowList = products.filter(low);
+    const collected = invoices.flatMap(i => i.payments).filter(p => startOfDay(p.at).getTime() === today.getTime()).reduce((s, p) => s + p.amount, 0);
+    return `<div class="head"><div><div class="eyebrow">${today.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</div><h1>Today at the clinic</h1></div>${vetChips()}</div>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-label">Appointments today</div><div class="kpi-value">${list.length}</div><div class="kpi-sub">${list.filter(a => a.status === 'Checked in').length} waiting · ${list.filter(a => a.status === 'In progress').length} in exam</div></div>
+        <div class="kpi"><div class="kpi-label">Collected today</div><div class="kpi-value">${tl(collected)}</div><div class="kpi-sub">card + cash</div></div>
+        <div class="kpi"><div class="kpi-label">Outstanding</div><div class="kpi-value">${tl(open.reduce((s, i) => s + balance(i), 0))}</div><div class="kpi-sub">${open.filter(i => i.due < today).length} overdue invoice(s)</div></div>
+        <div class="kpi"><div class="kpi-label">Low stock</div><div class="kpi-value">${lowList.length}</div><div class="kpi-sub">${lowList.map(p => p.name.split(' ')[0]).join(', ') || 'all fine'}</div></div>
+      </div>
+      <div class="grid2">
+        <section class="panel"><div class="panel-head"><h2>Schedule</h2><a data-go="calendar">Open calendar →</a></div>
+          ${list.length ? `<ul class="list sched">${list.map(a => { const p = pet(a.pet); return `<li><div class="t">${hm(a.start)}<span>${(a.end - a.start) / 60000} min</span></div><div class="bar" style="background:${vet(a.vet).color}"></div>
+            <div style="min-width:0"><a data-go="patient" data-id="${p.id}"><strong>${esc(p.name)}</strong></a> <span class="muted small">· ${p.species} · ${esc(ownerOf(p).name)}</span>${p.allergy ? ' <span class="badge b-warn">allergy</span>' : ''}<div class="small muted">${a.type} – ${esc(a.reason)} · <span class="badge ${statusBadge(a.status)}">${a.status}</span></div></div>
+            <div class="act">${actions(a)}</div></li>`; }).join('')}</ul>` : '<p class="muted">No appointments today for this filter.</p>'}
+        </section>
+        <div class="stack">
+          <section class="panel"><div class="panel-head"><h2>Boosters due soon</h2></div><ul class="list">
+            ${Object.entries(vaccines).flatMap(([petId, vs]) => vs.map(([name, ago]) => ({ p: pet(+petId), name, due: addDays(today, ago + 365) }))).filter(x => x.due <= addDays(today, 30)).sort((a, b) => a.due - b.due)
+              .map(x => `<li><span><a data-go="patient" data-id="${x.p.id}"><strong>${esc(x.p.name)}</strong></a> <span class="small muted">· ${x.name}</span></span><span class="badge ${x.due < today ? 'b-danger' : 'b-warn'}">${x.due < today ? 'Overdue' : 'Due'} ${dmy(x.due)}</span></li>`).join('')}
+          </ul><p class="small muted" style="margin:.6rem 0 0">An hourly background job sends one SMS per due booster to owners with KVKK consent.</p></section>
+          <section class="panel"><div class="panel-head"><h2>Low stock</h2><a data-go="inventory">Inventory →</a></div><ul class="list">
+            ${lowList.map(p => `<li><span>${esc(p.name)}</span><span class="small"><strong style="color:var(--danger)">${p.stock}</strong> / min ${p.reorder} ${p.unit}</span></li>`).join('') || '<li class="muted">All products above their reorder level.</li>'}
+          </ul></section>
+        </div>
+      </div>`;
+  }
+
+  function vCalendar() {
+    const days = [...Array(6)].map((_, i) => addDays(monday, i));
+    const hp = 76;
+    return `<div class="head"><div><div class="eyebrow">Week of ${dmy(monday)}</div><h1>Calendar</h1></div>${vetChips()}</div>
+      <div class="cal-wrap"><div class="cal">
+        <div></div>${days.map(d => `<div class="cal-hd ${d.getTime() === today.getTime() ? 'today' : ''}"><span>${d.toLocaleDateString('en-GB', { weekday: 'short' })}</span><strong>${d.getDate()}</strong></div>`).join('')}
+        <div class="cal-gut">${[...Array(10)].map((_, h) => `<div>${pad(9 + h)}:00</div>`).join('')}</div>
+        ${days.map(d => `<div class="cal-day">${appts.filter(a => startOfDay(a.start).getTime() === d.getTime() && (!vetFilter || a.vet === vetFilter) && !['Cancelled', 'No-show'].includes(a.status)).map(a => {
+          const top = ((a.start.getHours() - 9) * 60 + a.start.getMinutes()) * hp / 60, h = Math.max(20, (a.end - a.start) / 60000 * hp / 60 - 2);
+          return `<button class="ev ${a.status.replace(/[^a-z]/gi, '').toLowerCase()}" style="top:${top}px;height:${h}px;--vet:${vet(a.vet).color}" data-go="appt" data-id="${a.id}" title="${hm(a.start)}–${hm(a.end)} ${esc(pet(a.pet).name)} · ${a.type} · ${vet(a.vet).name}"><b>${hm(a.start)}</b>${esc(pet(a.pet).name)}<br><span class="muted">${a.type}</span></button>`; }).join('')}</div>`).join('')}
+      </div></div>
+      <p class="small muted">Booking rules enforced by the app: Mon–Sat 09:00–19:00, no bookings in the past, no double-booking of a veterinarian or a patient. The booking form shows only free slots.</p>`;
+  }
+
+  function vAppt() {
+    const a = appts.find(x => x.id === cur.id), p = pet(a.pet);
+    return `<div class="crumbs"><a data-go="calendar">Calendar</a> / Appointment</div>
+      <div class="head"><div><div class="eyebrow">${a.start.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })} · ${hm(a.start)}–${hm(a.end)}</div><h1>${a.type} – ${esc(p.name)}</h1></div><span class="badge ${statusBadge(a.status)}">${a.status}</span></div>
+      ${p.allergy ? `<div class="allergy"><div><strong>Allergy / intolerance:</strong> ${esc(p.allergy)}</div></div>` : ''}
+      <section class="panel"><ul class="list">
+        <li><span class="muted">Patient</span><a data-go="patient" data-id="${p.id}">${esc(p.name)} · ${p.species} · ${esc(p.breed)}</a></li>
+        <li><span class="muted">Owner</span><span>${esc(ownerOf(p).name)} · ${ownerOf(p).phone}</span></li>
+        <li><span class="muted">Veterinarian</span><span><span class="dot" style="background:${vet(a.vet).color}"></span> ${vet(a.vet).name}</span></li>
+        <li><span class="muted">Reason</span><span>${esc(a.reason)}</span></li>
+      </ul><div class="act" style="display:flex;gap:.4rem;margin-top:.8rem;flex-wrap:wrap">${actions(a)}${['Scheduled', 'Checked in'].includes(a.status) ? `<button class="btn sm danger" data-cancel="${a.id}">Cancel</button>` : ''}</div></section>`;
+  }
+
+  function vPatients() {
+    return `<div class="head"><div><h1>Patients</h1><p class="muted" style="margin:0">Search by name, breed, owner or 15-digit microchip in the real app.</p></div></div>
+      <section class="panel flush"><div class="table-wrap"><table><thead><tr><th>Patient</th><th>Species / breed</th><th>Age</th><th>Owner</th><th>Microchip</th></tr></thead><tbody>
+      ${pets.map(p => `<tr><td><a data-go="patient" data-id="${p.id}"><strong>${esc(p.name)}</strong></a>${p.allergy ? ' <span class="badge b-warn">allergy</span>' : ''}</td><td>${p.species} <span class="muted small">· ${esc(p.breed)}</span></td><td>${p.age}</td><td>${esc(ownerOf(p).name)}<div class="small muted">${ownerOf(p).phone}</div></td><td class="small" style="font-family:ui-monospace,monospace">${p.chip}</td></tr>`).join('')}
+      </tbody></table></div></section>`;
+  }
+
+  function vPatient() {
+    const p = pet(cur.id), o = ownerOf(p);
+    const vs = visits.filter(v => v.pet === p.id).map(v => ({ date: v.start, title: v.a || v.s || 'Examination', vet: v.vet, plan: v.p, open: v.open, id: v.id }));
+    const hist = [...vs, ...(history[p.id] || [])].sort((a, b) => b.date - a.date);
+    const vac = (vaccines[p.id] || []).map(([name, ago]) => { const given = addDays(today, ago), due = addDays(given, 365); return { name, given, due, st: due < today ? ['Overdue', 'b-danger'] : due <= addDays(today, 30) ? ['Due soon', 'b-warn'] : ['Up to date', 'b-ok'] }; });
+    return `<div class="crumbs"><a data-go="patients">Patients</a> / ${esc(p.name)}</div>
+      <section class="hero"><div class="avatar ${p.species === 'Cat' ? 'cat' : ''}">${esc(p.name[0])}</div><div style="flex:1;min-width:0"><h1>${esc(p.name)}</h1>
+        <div class="facts"><span>${p.species} · ${esc(p.breed)}</span><span>${p.sex}</span><span>${p.age}</span><span>${p.kg} kg</span><span style="font-family:ui-monospace,monospace" title="Country code ${p.chip.slice(0, 3)}">${p.chip}</span></div>
+        <div class="small">Owner: <strong>${esc(o.name)}</strong> · ${o.phone}</div></div></section>
+      ${p.allergy ? `<div class="allergy"><div><strong>Allergy / intolerance:</strong> ${esc(p.allergy)}</div></div>` : ''}
+      <div class="grid2"><section class="panel"><div class="panel-head"><h2>Medical history</h2></div>
+        ${hist.length ? `<ul class="list history">${hist.map(h => `<li><div><strong>${dmy(h.date)}</strong><div class="small muted">${vet(h.vet).name.replace('Dr. ', '')}</div></div><div>${h.id ? `<a data-go="visit" data-id="${h.id}"><strong>${esc(h.title)}</strong></a>` : `<strong>${esc(h.title)}</strong>`} ${h.open ? '<span class="badge b-info">In progress</span>' : ''}${h.plan ? `<div class="small"><b>Plan:</b> ${esc(h.plan)}</div>` : ''}</div></li>`).join('')}</ul>` : '<p class="muted">No visits yet.</p>'}
+      </section>
+      <section class="panel"><div class="panel-head"><h2>Vaccination status</h2></div><ul class="list">
+        ${vac.map(v => `<li><span><strong>${v.name}</strong><div class="small muted">Given ${dmy(v.given)}</div></span><span style="text-align:right"><span class="badge ${v.st[1]}">${v.st[0]}</span><div class="small muted">next ${dmy(v.due)}</div></span></li>`).join('') || '<li class="muted">No vaccinations recorded.</li>'}
+      </ul></section></div>`;
+  }
+
+  function vVisit() {
+    const v = visits.find(x => x.id === cur.id), p = pet(v.pet), o = ownerOf(p), edit = v.open && isClinical();
+    const net = v.items.reduce((s, i) => s + r2(i.qty * i.price), 0);
+    const inv = invoices.find(i => i.visit === v.id);
+    const dis = edit ? '' : 'disabled';
+    return `<div class="crumbs"><a data-go="patient" data-id="${p.id}">${esc(p.name)}</a> / Visit</div>
+      <div class="head"><div><div class="eyebrow">${dmy(v.start)} ${hm(v.start)} · ${vet(v.vet).name}</div><h1>${esc(p.name)} <span class="muted" style="font-weight:400">– ${p.species}, ${esc(p.breed)}, ${p.age}</span></h1><div class="small">Owner ${esc(o.name)} · ${o.phone}</div></div>
+        <span>${v.open ? '<span class="badge b-info">In progress</span>' : '<span class="badge b-ok">Closed</span>'} ${inv ? `<button class="btn sm" data-go="invoice" data-id="${inv.id}">Invoice</button>` : ''}</span></div>
+      ${p.allergy ? `<div class="allergy"><div><strong>Allergy / intolerance:</strong> ${esc(p.allergy)}</div></div>` : ''}
+      <div class="grid2">
+        <section class="panel"><div class="panel-head"><h2>Examination (SOAP)</h2>${edit ? '' : '<span class="small muted">read-only</span>'}</div>
+          <div class="row3"><div class="field"><label for="f-w">Weight (kg)</label><input type="number" id="f-w" step="0.01" value="${v.weight}" ${dis}></div><div class="field"><label for="f-t">Temperature (°C)</label><input type="number" id="f-t" step="0.1" value="${v.temp}" ${dis}></div><div class="field"><label for="f-h">Heart rate (bpm)</label><input type="number" id="f-h" value="${v.hr}" ${dis}></div></div>
+          <div class="soap">
+            <div class="field"><label for="f-s">S – Subjective (history, owner's report)</label><textarea id="f-s" rows="2" ${dis}>${esc(v.s)}</textarea></div>
+            <div class="field"><label for="f-o">O – Objective (examination findings)</label><textarea id="f-o" rows="2" ${dis} placeholder="e.g. Redness and brown discharge in both ear canals">${esc(v.o)}</textarea></div>
+            <div class="field"><label for="f-a">A – Assessment (diagnosis)</label><textarea id="f-a" rows="2" ${dis} placeholder="Required to close the visit">${esc(v.a)}</textarea></div>
+            <div class="field"><label for="f-p">P – Plan (treatment, follow-up)</label><textarea id="f-p" rows="2" ${dis}>${esc(v.p)}</textarea></div>
+          </div>
+          ${edit ? '<button class="btn" style="margin-top:.8rem" data-save="1">Save notes</button>' : ''}
+        </section>
+        <div class="stack">
+          <section class="panel"><div class="panel-head"><h2>Treatments &amp; products</h2><strong>${tl(net)} <span class="small muted">net</span></strong></div>
+            <ul class="list">${v.items.map(i => `<li><span>${esc(i.desc)}<div class="small muted">${i.qty} × ${tl(i.price)}</div></span><span style="display:flex;gap:.5rem;align-items:center">${tl(r2(i.qty * i.price))}${edit ? `<button class="btn link" data-rmitem="${i.id}" aria-label="Remove">✕</button>` : ''}</span></li>`).join('') || '<li class="muted">Nothing added yet.</li>'}</ul>
+            ${edit ? `<div class="addrow"><select id="add-prod" aria-label="Product or service">${products.map(pr => `<option value="${pr.id}">${esc(pr.name)} – ${tl(pr.price)}${pr.stock != null ? ` (${pr.stock} in stock)` : ''}</option>`).join('')}</select><input type="number" id="add-qty" value="1" min="1" aria-label="Quantity"><button class="btn" data-additem="1">Add</button></div><p class="small muted" style="margin:.4rem 0 0">Stock is deducted immediately and restored if the line is removed.</p>` : ''}
+          </section>
+          ${edit ? `<section class="panel tint"><h2>Finish the visit</h2><p class="small muted">Closing locks the record, completes the appointment and creates a draft invoice from the lines above. An assessment is required.</p><button class="btn primary" style="width:100%;justify-content:center" data-close="1">Close visit &amp; create invoice</button></section>` : ''}
+        </div>
+      </div>`;
+  }
+
+  function vInvoices() {
+    return `<div class="head"><div><h1>Invoices</h1><p class="muted" style="margin:0">Created automatically when a visit is closed, or manually for counter sales.</p></div></div>
+      <section class="panel flush"><div class="table-wrap"><table><thead><tr><th>Number</th><th>Owner</th><th>Date</th><th>Due</th><th class="num">Total</th><th class="num">Open</th><th>Status</th></tr></thead><tbody>
+      ${[...invoices].sort((a, b) => b.created - a.created).map(i => `<tr><td style="font-family:ui-monospace,monospace"><a data-go="invoice" data-id="${i.id}">${i.number || 'Draft #' + i.id}</a></td><td>${esc(owners.find(o => o.id === i.owner).name)}</td><td class="small">${dmy(i.issued || i.created)}</td>
+        <td class="small" style="${i.due && i.due < today && ['Issued', 'Partially paid'].includes(i.status) ? 'color:var(--danger);font-weight:700' : ''}">${dmy(i.due)}</td><td class="num">${tl(total(i))}</td><td class="num">${['Issued', 'Partially paid'].includes(i.status) ? tl(balance(i)) : '—'}</td><td><span class="badge ${invBadge(i.status)}">${i.status}</span></td></tr>`).join('')}
+      </tbody></table></div></section>`;
+  }
+
+  function vInvoice() {
+    const i = invoices.find(x => x.id === cur.id), o = owners.find(x => x.id === i.owner), draft = i.status === 'Draft', bill = isBilling();
+    return `<div class="crumbs"><a data-go="invoices">Invoices</a> / ${i.number || 'Draft'}</div>
+      <div class="head"><div><div class="eyebrow">${i.issued ? `Issued ${dmy(i.issued)} · due ${dmy(i.due)}` : `Created ${dmy(i.created)}`}</div><h1 style="font-family:ui-monospace,monospace">${i.number || 'Draft invoice #' + i.id}</h1><div>For ${esc(o.name)}</div></div><span class="badge ${invBadge(i.status)}">${i.status}</span></div>
+      <div class="grid2"><section class="panel"><div class="table-wrap"><table><thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">KDV</th><th class="num">Amount</th></tr></thead><tbody>
+        ${i.lines.map(l => `<tr><td>${esc(l.desc)}</td><td class="num">${l.qty}</td><td class="num">${tl(l.price)}</td><td class="num">${pct(l.vat)}</td><td class="num">${tl(lineNet(l))}</td></tr>`).join('')}
+      </tbody></table></div>
+      <div class="totals"><div><span>Subtotal (net)</span><span>${tl(subtotal(i))}</span></div>${i.discount ? `<div><span>Discount ${pct(i.discount)}</span><span>− ${tl(discountAmt(i))}</span></div>` : ''}
+        ${breakdown(i).map(b => `<div class="muted"><span>KDV ${pct(b.rate)} on ${tl(b.base)}</span><span>${tl(b.vat)}</span></div>`).join('')}
+        <div class="grand"><span>Total</span><span>${tl(total(i))}</span></div>${paid(i) ? `<div><span>Paid</span><span>− ${tl(paid(i))}</span></div><div style="font-weight:800"><span>Balance due</span><span>${tl(balance(i))}</span></div>` : ''}</div></section>
+      <div class="stack">
+        ${!bill ? '<section class="panel"><p class="small muted" style="margin:0">Switch to <strong>Receptionist</strong> (bottom left) to apply a discount, issue the invoice and take a payment.</p></section>' : ''}
+        ${bill && draft ? `<section class="panel"><h2>Discount</h2><div class="addrow"><input type="number" id="disc" min="0" max="50" step="0.5" value="${i.discount * 100}" aria-label="Discount percent" style="width:auto;flex:1"><span style="align-self:center">%</span><button class="btn" data-disc="1">Apply</button></div><div class="err" id="disc-err"></div></section>
+          <section class="panel tint"><p class="small muted" style="margin-top:0">Issuing assigns the next number of the year and locks the lines. Payment term: 14 days.</p><button class="btn primary" style="width:100%;justify-content:center" data-issue="1">Issue invoice</button></section>` : ''}
+        ${bill && ['Issued', 'Partially paid'].includes(i.status) ? `<section class="panel tint"><h2>Register payment</h2><div class="field" style="margin-top:.6rem"><label for="pay-amt">Amount (₺)</label><input type="number" id="pay-amt" step="0.01" value="${balance(i).toFixed(2)}"></div>
+          <div class="field" style="margin-top:.5rem"><label for="pay-m">Method</label><select id="pay-m"><option>Credit card</option><option>Cash</option><option>Bank transfer</option></select></div><div class="err" id="pay-err"></div><button class="btn ok" style="width:100%;justify-content:center" data-pay="1">Register payment</button></section>` : ''}
+        ${i.payments.length ? `<section class="panel"><h2>Payments</h2><ul class="list">${i.payments.map(p => `<li><span class="small">${dmy(p.at)} · ${p.method}</span><strong>${tl(p.amount)}</strong></li>`).join('')}</ul></section>` : ''}
+      </div></div>`;
+  }
+
+  function vInventory() {
+    return `<div class="head"><div><h1>Inventory &amp; price list</h1><p class="muted" style="margin:0">Net prices; KDV is added on the invoice. Stock goes down when a product is used in a visit.</p></div></div>
+      <div class="grid2"><section class="panel flush"><div class="table-wrap"><table><thead><tr><th>Product</th><th>Category</th><th class="num">Net</th><th class="num">KDV</th><th class="num">Stock</th></tr></thead><tbody>
+        ${products.map(p => `<tr><td><strong>${esc(p.name)}</strong><div class="small muted" style="font-family:ui-monospace,monospace">${p.sku}</div></td><td><span class="badge b-muted">${p.cat}</span></td><td class="num">${tl(p.price)}<span class="small muted"> / ${p.unit}</span></td><td class="num">${pct(p.vat)}</td>
+          <td class="num">${p.stock == null ? '<span class="small muted">service</span>' : `<strong style="${low(p) ? 'color:var(--danger)' : ''}">${p.stock}</strong> <span class="small muted">/ min ${p.reorder}</span>`}</td></tr>`).join('')}
+      </tbody></table></div></section>
+      <section class="panel"><div class="panel-head"><h2>Latest stock movements</h2></div><ul class="list">
+        ${products.flatMap(p => p.moves.map(m => ({ ...m, name: p.name }))).sort((a, b) => b.at - a.at).slice(0, 10).map(m => `<li><span>${esc(m.name)}<div class="small muted">${m.type} · ${esc(m.ref)}</div></span><strong style="color:${m.qty < 0 ? 'var(--danger)' : '#1f6b3d'}">${m.qty > 0 ? '+' : ''}${m.qty}</strong></li>`).join('')}
+      </ul></section></div>`;
+  }
+
+  // ---------- events ----------
+  function bind(root) {
+    root.querySelectorAll('[data-go]').forEach(el => el.addEventListener('click', () => go(el.dataset.go, el.dataset.id ? +el.dataset.id : null)));
+    root.querySelectorAll('[data-vetf]').forEach(el => el.addEventListener('click', () => { vetFilter = +el.dataset.vetf; render(); }));
+    root.querySelectorAll('[data-checkin]').forEach(el => el.addEventListener('click', () => attempt(() => { const a = appts.find(x => x.id === +el.dataset.checkin); a.status = 'Checked in'; toast(`${pet(a.pet).name} checked in – waiting for the veterinarian.`); })));
+    root.querySelectorAll('[data-cancel]').forEach(el => el.addEventListener('click', () => attempt(() => { appts.find(x => x.id === +el.dataset.cancel).status = 'Cancelled'; toast('Appointment cancelled – the slot is free again.'); })));
+    root.querySelectorAll('[data-start]').forEach(el => el.addEventListener('click', () => { try { const id = startVisit(appts.find(x => x.id === +el.dataset.start)); go('visit', id); } catch (e) { if (e instanceof DomainError) toast(e.message, true); else throw e; } }));
+    const v = cur.view === 'visit' ? visits.find(x => x.id === cur.id) : null;
+    const saveNotes = () => { if (!v || !v.open) return; v.weight = $('#f-w').value; v.temp = $('#f-t').value; v.hr = $('#f-h').value; v.s = $('#f-s').value; v.o = $('#f-o').value; v.a = $('#f-a').value; v.p = $('#f-p').value; };
+    root.querySelectorAll('[data-save]').forEach(el => el.addEventListener('click', () => { saveNotes(); toast('Medical notes saved.'); }));
+    root.querySelectorAll('[data-additem]').forEach(el => el.addEventListener('click', () => { saveNotes(); attempt(() => addItem(v, product(+$('#add-prod').value), +$('#add-qty').value)); }));
+    root.querySelectorAll('[data-rmitem]').forEach(el => el.addEventListener('click', () => { saveNotes(); attempt(() => removeItem(v, +el.dataset.rmitem)); }));
+    root.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', () => { saveNotes(); try { const inv = closeVisit(v); toast(inv ? 'Visit closed. A draft invoice was created.' : 'Visit closed.'); inv ? go('invoice', inv) : render(); } catch (e) { if (e instanceof DomainError) toast(e.message, true); else throw e; } }));
+    const inv = cur.view === 'invoice' ? invoices.find(x => x.id === cur.id) : null;
+    root.querySelectorAll('[data-disc]').forEach(el => el.addEventListener('click', () => {
+      const r = +$('#disc').value / 100; if (!(r >= 0 && r <= 0.5)) { $('#disc-err').textContent = 'Discount must be between 0 % and 50 %.'; return; } inv.discount = r; render();
+    }));
+    root.querySelectorAll('[data-issue]').forEach(el => el.addEventListener('click', () => { inv.number = `VF-${today.getFullYear()}-${String(++invoiceSeq).padStart(5, '0')}`; inv.issued = new Date(); inv.due = addDays(today, 14); inv.status = 'Issued'; toast(`Invoice ${inv.number} issued.`); render(); }));
+    root.querySelectorAll('[data-pay]').forEach(el => el.addEventListener('click', () => {
+      const amt = r2(+$('#pay-amt').value);
+      if (!(amt > 0)) { $('#pay-err').textContent = 'Payment amount must be greater than zero.'; return; }
+      if (amt > balance(inv)) { $('#pay-err').textContent = `Payment exceeds the open balance of ${tl(balance(inv))}.`; return; }
+      inv.payments.push({ amount: amt, method: $('#pay-m').value, at: new Date() }); inv.status = balance(inv) === 0 ? 'Paid' : 'Partially paid'; toast(`Payment of ${tl(amt)} registered.`); render();
+    }));
+  }
+
+  render();
+})();
+</script>
+
+</body>
+</html>

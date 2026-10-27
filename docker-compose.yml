@@ -1,0 +1,24 @@
+# SQL Server + VetFlow. Open http://localhost:8080 after `docker compose up --build`.
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "VetFlow!Dev2026"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqldata:/var/opt/mssql
+
+  web:
+    build: .
+    depends_on:
+      - sqlserver
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=VetFlow;User Id=sa;Password=VetFlow!Dev2026;TrustServerCertificate=True"
+    ports:
+      - "8080:8080"
+
+volumes:
+  sqldata:

@@ -1,0 +1,56 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{2C1EE1FD-C4FF-4911-B5C2-9CE3F0846D4F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{933BE9B7-21C1-4647-BD97-73568AE4CD28}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VetFlow.Domain", "src\VetFlow.Domain\VetFlow.Domain.csproj", "{70071CD8-A5C2-4AD1-9AA6-7C8BABFD81CA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VetFlow.Application", "src\VetFlow.Application\VetFlow.Application.csproj", "{194FE26C-A1AA-449E-8E32-07CFBB1F69B0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VetFlow.Infrastructure", "src\VetFlow.Infrastructure\VetFlow.Infrastructure.csproj", "{486B003E-632B-4A94-8399-D5D13AA2F264}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VetFlow.Web", "src\VetFlow.Web\VetFlow.Web.csproj", "{90107132-6253-419C-A0D9-7CD332D58563}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VetFlow.Tests", "tests\VetFlow.Tests\VetFlow.Tests.csproj", "{979D67F2-4D03-4699-99E7-52B442FA6449}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{70071CD8-A5C2-4AD1-9AA6-7C8BABFD81CA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{70071CD8-A5C2-4AD1-9AA6-7C8BABFD81CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{70071CD8-A5C2-4AD1-9AA6-7C8BABFD81CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{70071CD8-A5C2-4AD1-9AA6-7C8BABFD81CA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{194FE26C-A1AA-449E-8E32-07CFBB1F69B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{194FE26C-A1AA-449E-8E32-07CFBB1F69B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{194FE26C-A1AA-449E-8E32-07CFBB1F69B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{194FE26C-A1AA-449E-8E32-07CFBB1F69B0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{486B003E-632B-4A94-8399-D5D13AA2F264}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{486B003E-632B-4A94-8399-D5D13AA2F264}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{486B003E-632B-4A94-8399-D5D13AA2F264}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{486B003E-632B-4A94-8399-D5D13AA2F264}.Release|Any CPU.Build.0 = Release|Any CPU
+		{90107132-6253-419C-A0D9-7CD332D58563}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{90107132-6253-419C-A0D9-7CD332D58563}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{90107132-6253-419C-A0D9-7CD332D58563}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{90107132-6253-419C-A0D9-7CD332D58563}.Release|Any CPU.Build.0 = Release|Any CPU
+		{979D67F2-4D03-4699-99E7-52B442FA6449}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{979D67F2-4D03-4699-99E7-52B442FA6449}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{979D67F2-4D03-4699-99E7-52B442FA6449}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{979D67F2-4D03-4699-99E7-52B442FA6449}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{70071CD8-A5C2-4AD1-9AA6-7C8BABFD81CA} = {2C1EE1FD-C4FF-4911-B5C2-9CE3F0846D4F}
+		{194FE26C-A1AA-449E-8E32-07CFBB1F69B0} = {2C1EE1FD-C4FF-4911-B5C2-9CE3F0846D4F}
+		{486B003E-632B-4A94-8399-D5D13AA2F264} = {2C1EE1FD-C4FF-4911-B5C2-9CE3F0846D4F}
+		{90107132-6253-419C-A0D9-7CD332D58563} = {2C1EE1FD-C4FF-4911-B5C2-9CE3F0846D4F}
+		{979D67F2-4D03-4699-99E7-52B442FA6449} = {933BE9B7-21C1-4647-BD97-73568AE4CD28}
+	EndGlobalSection
+EndGlobal
