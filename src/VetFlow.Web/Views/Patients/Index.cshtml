@@ -1,0 +1,46 @@
+@model PagedResult<PatientListItem>
+@{
+    ViewData["Title"] = "Patients";
+    Species? species = ViewBag.Species;
+    DateTime today = ViewBag.Today;
+}
+<div class="page-head">
+    <div><h1>Patients</h1><p class="text-muted mb-0">Every animal treated at the clinic. New patients are added from their owner's page.</p></div>
+    <a class="btn btn-primary" asp-controller="Owners" asp-action="Create"><i class="bi bi-plus-lg"></i> New owner &amp; patient</a>
+</div>
+<form method="get" class="filter-bar">
+    <input class="form-control" name="q" value="@ViewBag.Query" placeholder="Name, breed, owner or 15-digit microchip" aria-label="Search patients" />
+    <select class="form-select w-auto" name="species" asp-items="Ui.EnumOptions<Species>(species)" aria-label="Species">
+        <option value="">All species</option>
+    </select>
+    <button class="btn btn-outline-primary" type="submit"><i class="bi bi-search"></i> Search</button>
+</form>
+<section class="panel p-0">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead><tr><th>Patient</th><th>Species / breed</th><th>Age</th><th>Owner</th><th>Microchip</th><th>Last visit</th></tr></thead>
+            <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="6" class="empty-state">No patients found.</td></tr>
+            }
+            @foreach (var p in Model.Items)
+            {
+                <tr class="@(p.IsDeceased ? "text-muted" : "")">
+                    <td>
+                        <a class="fw-semibold" asp-action="Details" asp-route-id="@p.Id">@p.Name</a>
+                        @if (p.HasAllergies) { <i class="bi bi-exclamation-triangle-fill text-warning ms-1" title="Has allergies"></i> }
+                        @if (p.IsDeceased) { <span class="badge badge-soft-secondary ms-1">Deceased</span> }
+                    </td>
+                    <td>@p.Species <span class="text-muted small">· @(p.Breed ?? "—")</span></td>
+                    <td class="text-nowrap">@VetFlow.Domain.Common.PatientAge.Describe(p.DateOfBirth, today)</td>
+                    <td><a asp-controller="Owners" asp-action="Details" asp-route-id="@p.OwnerId">@p.OwnerName</a><div class="small text-muted">@Ui.Phone(p.OwnerPhone)</div></td>
+                    <td class="font-monospace small">@(p.MicrochipNumber ?? "—")</td>
+                    <td class="small">@Ui.Date(p.LastVisit)</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</section>
+<partial name="_Pager" model="Model" />

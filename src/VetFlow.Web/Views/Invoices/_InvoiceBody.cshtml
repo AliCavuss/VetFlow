@@ -1,0 +1,49 @@
+@model Invoice
+@{
+    var editable = Model.Status == InvoiceStatus.Draft && (bool)(ViewData["Editable"] ?? false);
+}
+<table class="table invoice-table align-middle">
+    <thead><tr><th>Description</th><th class="text-end">Qty</th><th class="text-end">Unit price</th><th class="text-end">KDV</th><th class="text-end">Amount</th>@if (editable) { <th></th> }</tr></thead>
+    <tbody>
+    @if (Model.Lines.Count == 0)
+    {
+        <tr><td colspan="6" class="text-muted">No lines yet.</td></tr>
+    }
+    @foreach (var line in Model.Lines)
+    {
+        <tr>
+            <td>@line.Description</td>
+            <td class="text-end">@Ui.Quantity(line.Quantity)</td>
+            <td class="text-end text-nowrap">@Ui.Money(line.UnitPrice)</td>
+            <td class="text-end">@Ui.Percent(line.VatRate)</td>
+            <td class="text-end text-nowrap">@Ui.Money(line.NetAmount)</td>
+            @if (editable)
+            {
+                <td class="text-end">
+                    <form asp-action="RemoveLine" asp-route-id="@Model.Id" method="post">
+                        <input type="hidden" name="lineId" value="@line.Id" />
+                        <button class="btn btn-sm btn-link text-danger p-0" type="submit" aria-label="Remove line"><i class="bi bi-x-circle"></i></button>
+                    </form>
+                </td>
+            }
+        </tr>
+    }
+    </tbody>
+</table>
+<div class="totals">
+    <div><span>Subtotal (net)</span><span>@Ui.Money(Model.Subtotal)</span></div>
+    @if (Model.DiscountRate > 0)
+    {
+        <div><span>Discount @Ui.Percent(Model.DiscountRate)</span><span>− @Ui.Money(Model.DiscountAmount)</span></div>
+    }
+    @foreach (var (rate, taxBase, vat) in Model.VatBreakdown())
+    {
+        <div class="text-muted"><span>KDV @Ui.Percent(rate) on @Ui.Money(taxBase)</span><span>@Ui.Money(vat)</span></div>
+    }
+    <div class="grand"><span>Total</span><span>@Ui.Money(Model.Total)</span></div>
+    @if (Model.PaidAmount > 0)
+    {
+        <div><span>Paid</span><span>− @Ui.Money(Model.PaidAmount)</span></div>
+        <div class="fw-bold"><span>Balance due</span><span>@Ui.Money(Model.Balance)</span></div>
+    }
+</div>

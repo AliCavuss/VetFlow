@@ -1,0 +1,11 @@
+### VetFlow JSON endpoints (sign in through the browser first – they use the auth cookie)
+@baseUrl = https://localhost:7280
+
+### Free 30-minute slots for veterinarian 1 tomorrow
+GET {{baseUrl}}/api/slots?vetId=1&date=2026-10-23&duration=30
+
+### Patient autocomplete
+GET {{baseUrl}}/api/patients/search?term=kar
+
+### Health check (anonymous)
+GET {{baseUrl}}/health

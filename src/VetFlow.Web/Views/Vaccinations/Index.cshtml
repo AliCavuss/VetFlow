@@ -1,0 +1,43 @@
+@model IReadOnlyList<VaccinationDueItem>
+@{
+    ViewData["Title"] = "Vaccinations due";
+    int days = ViewBag.Days;
+    DateTime today = ViewBag.Today;
+}
+<div class="page-head">
+    <div><h1>Vaccinations due</h1><p class="text-muted mb-0">Latest vaccination per patient and vaccine whose booster is overdue or due within @days days.</p></div>
+    <a class="btn btn-outline-secondary" asp-action="Reminders"><i class="bi bi-chat-dots"></i> SMS reminders</a>
+</div>
+<div class="chip-group mb-3">
+    @foreach (var d in new[] { 0, 7, 14, 30, 60 })
+    {
+        <a class="chip @(d == days ? "active" : "")" asp-route-days="@d">@(d == 0 ? "Overdue only" : $"Next {d} days")</a>
+    }
+</div>
+<section class="panel p-0">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead><tr><th>Due</th><th>Patient</th><th>Vaccine</th><th>Last given</th><th>Owner</th><th>SMS</th><th></th></tr></thead>
+            <tbody>
+            @if (Model.Count == 0)
+            {
+                <tr><td colspan="7" class="empty-state">Nothing due – all patients are up to date.</td></tr>
+            }
+            @foreach (var v in Model)
+            {
+                var overdue = v.NextDueOn < today;
+                <tr>
+                    <td class="text-nowrap"><span class="badge @(overdue ? "badge-soft-danger" : "badge-soft-warning")">@Ui.Date(v.NextDueOn)</span>
+                        <div class="small text-muted">@(overdue ? $"{(today - v.NextDueOn).Days} days overdue" : $"in {(v.NextDueOn - today).Days} days")</div></td>
+                    <td><a class="fw-semibold" asp-controller="Patients" asp-action="Details" asp-route-id="@v.PatientId">@v.PatientName</a> <span class="small text-muted">· @v.Species</span></td>
+                    <td>@v.VaccineName</td>
+                    <td class="small">@Ui.Date(v.AdministeredOn)</td>
+                    <td><a asp-controller="Owners" asp-action="Details" asp-route-id="@v.OwnerId">@v.OwnerName</a><div class="small text-muted">@Ui.Phone(v.OwnerPhone)</div></td>
+                    <td>@if (v.ReminderConsent) { <i class="bi bi-check-circle text-success" title="Owner consented to SMS"></i> } else { <i class="bi bi-dash-circle text-muted" title="No SMS consent"></i> }</td>
+                    <td class="text-end"><a class="btn btn-sm btn-outline-primary" asp-controller="Appointments" asp-action="Create" asp-route-patientId="@v.PatientId">Book</a></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

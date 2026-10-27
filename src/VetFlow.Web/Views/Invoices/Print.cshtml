@@ -1,0 +1,39 @@
+@model InvoiceDetailsViewModel
+@{
+    Layout = "_PrintLayout";
+    var i = Model.Invoice;
+    ViewData["Title"] = i.Number ?? "Draft invoice";
+}
+<div class="sheet">
+    <header class="sheet-head">
+        <div>
+            <div class="sheet-brand">@Model.ClinicName</div>
+            <div class="small text-muted">Bağdat Caddesi 123, Kadıköy / İstanbul · +90 216 555 00 00</div>
+        </div>
+        <div class="text-end">
+            <div class="sheet-title">INVOICE</div>
+            <div class="font-monospace">@(i.Number ?? "DRAFT")</div>
+        </div>
+    </header>
+    <section class="sheet-meta">
+        <div>
+            <div class="label">Bill to</div>
+            <strong>@i.Owner.FullName</strong><br />
+            @Ui.Phone(i.Owner.Phone)<br />
+            @i.Owner.Address
+        </div>
+        <div class="text-end">
+            <div><span class="label">Date</span> @Ui.Date(i.IssuedAt ?? i.CreatedAt)</div>
+            <div><span class="label">Due</span> @Ui.Date(i.DueDate)</div>
+            @if (i.Visit is not null)
+            {
+                <div><span class="label">Patient</span> @i.Visit.Patient.Name</div>
+            }
+        </div>
+    </section>
+    <partial name="_InvoiceBody" model="i" />
+    <footer class="sheet-foot small text-muted">
+        Prices in Turkish lira. Thank you for trusting us with your companion's care.
+        <button class="btn btn-sm btn-outline-secondary no-print float-end" type="button" onclick="window.print()">Print</button>
+    </footer>
+</div>

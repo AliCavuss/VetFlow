@@ -1,0 +1,54 @@
+@model LoginViewModel
+@{ ViewData["Title"] = "Sign in"; }
+<div class="auth-panel">
+    <section class="auth-intro">
+        <div class="brand brand-lg"><span class="brand-mark"><i class="bi bi-plus-lg"></i></span><span>Vet<strong>Flow</strong></span></div>
+        <h1>Run the whole clinic day from one screen.</h1>
+        <ul class="auth-points">
+            <li><i class="bi bi-calendar-check"></i> Calendar with double-booking protection</li>
+            <li><i class="bi bi-clipboard2-pulse"></i> SOAP medical records with allergy warnings</li>
+            <li><i class="bi bi-shield-check"></i> Vaccination tracking and SMS reminders</li>
+            <li><i class="bi bi-receipt"></i> Invoices with KDV, stock deducted automatically</li>
+        </ul>
+    </section>
+    <section class="auth-card">
+        <h2 class="h4 mb-3">Sign in</h2>
+        <form asp-action="Login" method="post">
+            <input type="hidden" asp-for="ReturnUrl" />
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" autocomplete="username" autofocus />
+                <span asp-validation-for="Email" class="text-danger small"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label"></label>
+                <input asp-for="Password" class="form-control" autocomplete="current-password" />
+                <span asp-validation-for="Password" class="text-danger small"></span>
+            </div>
+            <div class="form-check mb-3">
+                <input asp-for="RememberMe" class="form-check-input" />
+                <label asp-for="RememberMe" class="form-check-label"></label>
+            </div>
+            <button class="btn btn-primary w-100" type="submit">Sign in</button>
+        </form>
+        <div class="demo-users">
+            <div class="small text-muted mb-2">Demo accounts – click to fill in</div>
+            @foreach (var (email, password, name, role, _) in VetFlow.Infrastructure.Data.DbSeeder.DemoUsers)
+            {
+                <button type="button" class="demo-user" data-email="@email" data-password="@password">
+                    <span class="badge badge-soft-primary">@role</span> <span>@name</span>
+                </button>
+            }
+        </div>
+    </section>
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.querySelectorAll('.demo-user').forEach(b => b.addEventListener('click', () => {
+            document.getElementById('Email').value = b.dataset.email;
+            document.getElementById('Password').value = b.dataset.password;
+        }));
+    </script>
+}

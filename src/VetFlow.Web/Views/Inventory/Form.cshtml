@@ -1,0 +1,32 @@
+@model ProductFormModel
+@{
+    var isEdit = Model.Id.HasValue;
+    ViewData["Title"] = isEdit ? $"Edit {Model.Name}" : "New product";
+}
+<nav class="crumbs"><a asp-action="Index">Inventory</a> / @ViewData["Title"]</nav>
+<div class="page-head"><div><h1>@ViewData["Title"]</h1></div></div>
+<section class="panel form-panel">
+    <form asp-action="@(isEdit ? "Edit" : "Create")" asp-route-id="@Model.Id" method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+        <div class="row g-3">
+            <div class="col-md-8"><label asp-for="Name" class="form-label"></label><input asp-for="Name" class="form-control" /><span asp-validation-for="Name" class="text-danger small"></span></div>
+            <div class="col-md-4"><label asp-for="Sku" class="form-label"></label><input asp-for="Sku" class="form-control font-monospace text-uppercase" /><span asp-validation-for="Sku" class="text-danger small"></span></div>
+            <div class="col-md-4"><label asp-for="Category" class="form-label"></label><select asp-for="Category" asp-items="Ui.EnumOptions<ProductCategory>(Model.Category)" class="form-select"></select></div>
+            <div class="col-md-4"><label asp-for="Unit" class="form-label"></label><input asp-for="Unit" class="form-control" list="units" /><datalist id="units"><option value="session"></option><option value="procedure"></option><option value="tablet"></option><option value="dose"></option><option value="ml"></option><option value="bottle"></option><option value="pcs"></option><option value="bag"></option></datalist></div>
+            <div class="col-md-4 d-flex align-items-end"><div class="form-check"><input asp-for="IsActive" class="form-check-input" /><label asp-for="IsActive" class="form-check-label"></label></div></div>
+            <div class="col-md-4"><label asp-for="UnitPrice" class="form-label"></label><input asp-for="UnitPrice" class="form-control" step="0.01" /><span asp-validation-for="UnitPrice" class="text-danger small"></span></div>
+            <div class="col-md-4"><label asp-for="VatPercent" class="form-label"></label><select asp-for="VatPercent" class="form-select"><option value="0">0 %</option><option value="1">1 %</option><option value="10">10 %</option><option value="20">20 %</option></select></div>
+            <div class="col-md-4 d-flex align-items-end"><div class="form-check"><input asp-for="TracksStock" class="form-check-input" /><label asp-for="TracksStock" class="form-check-label"></label></div></div>
+            <div class="col-md-4"><label asp-for="ReorderLevel" class="form-label"></label><input asp-for="ReorderLevel" class="form-control" step="any" /></div>
+            @if (!isEdit)
+            {
+                <div class="col-md-4"><label asp-for="InitialStock" class="form-label"></label><input asp-for="InitialStock" class="form-control" step="any" /></div>
+            }
+        </div>
+        <div class="mt-4 d-flex gap-2">
+            <button class="btn btn-primary" type="submit"><i class="bi bi-check-lg"></i> Save</button>
+            <a class="btn btn-outline-secondary" asp-action="@(isEdit ? "Details" : "Index")" asp-route-id="@Model.Id">Cancel</a>
+        </div>
+    </form>
+</section>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

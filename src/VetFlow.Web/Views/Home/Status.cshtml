@@ -1,0 +1,16 @@
+@model ErrorViewModel
+@{
+    ViewData["Title"] = Model.StatusCode.ToString();
+    var (title, text) = Model.StatusCode switch
+    {
+        404 => ("Not found", "The page or record you are looking for does not exist."),
+        403 => ("Access denied", "Your role does not allow this action."),
+        _ => ("Request failed", "The request could not be completed.")
+    };
+}
+<div class="empty-state my-5">
+    <div class="display-6 fw-bold text-primary">@Model.StatusCode</div>
+    <h1 class="h4 mt-2">@title</h1>
+    <p class="text-muted">@text</p>
+    <a class="btn btn-primary" href="/">Back to today</a>
+</div>

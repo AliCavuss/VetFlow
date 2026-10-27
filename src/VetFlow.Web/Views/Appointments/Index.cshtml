@@ -1,0 +1,84 @@
+@model CalendarViewModel
+@{
+    ViewData["Title"] = "Calendar";
+    var hours = CalendarViewModel.LastHour - CalendarViewModel.FirstHour;
+    var px = CalendarViewModel.PixelsPerHour;
+    var weekEnd = Model.WeekStart.AddDays(5);
+}
+<div class="page-head">
+    <div>
+        <div class="eyebrow">Week of @Model.WeekStart.ToString("d MMM") – @weekEnd.ToString("d MMM yyyy")</div>
+        <h1>Calendar</h1>
+    </div>
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+        <div class="btn-group" role="group" aria-label="Week navigation">
+            <a class="btn btn-outline-secondary" asp-route-date="@Model.WeekStart.AddDays(-7).ToString("yyyy-MM-dd")" asp-route-vetId="@(Model.VeterinarianId ?? 0)" aria-label="Previous week"><i class="bi bi-chevron-left"></i></a>
+            <a class="btn btn-outline-secondary" asp-route-date="@Model.Today.ToString("yyyy-MM-dd")" asp-route-vetId="@(Model.VeterinarianId ?? 0)">This week</a>
+            <a class="btn btn-outline-secondary" asp-route-date="@Model.WeekStart.AddDays(7).ToString("yyyy-MM-dd")" asp-route-vetId="@(Model.VeterinarianId ?? 0)" aria-label="Next week"><i class="bi bi-chevron-right"></i></a>
+        </div>
+    </div>
+</div>
+
+<div class="chip-group mb-3" role="group" aria-label="Filter by veterinarian">
+    <a class="chip @(Model.VeterinarianId is null ? "active" : "")" asp-route-date="@Model.WeekStart.ToString("yyyy-MM-dd")" asp-route-vetId="0">All vets</a>
+    @foreach (var v in Model.Veterinarians)
+    {
+        <a class="chip @(Model.VeterinarianId == v.Id ? "active" : "")" asp-route-date="@Model.WeekStart.ToString("yyyy-MM-dd")" asp-route-vetId="@v.Id">
+            <span class="dot" style="background:@v.CalendarColor"></span>@v.DisplayName
+        </a>
+    }
+</div>
+
+<div class="calendar-scroll">
+    <div class="calendar" style="--hour-px:@(px)px; --hours:@hours">
+        <div class="cal-corner"></div>
+        @foreach (var day in Model.Days)
+        {
+            <div class="cal-day-head @(day == Model.Today ? "is-today" : "")">
+                <span>@day.ToString("ddd")</span><strong>@day.Day</strong>
+            </div>
+        }
+
+        <div class="cal-gutter">
+            @for (var h = CalendarViewModel.FirstHour; h < CalendarViewModel.LastHour; h++)
+            {
+                <div class="cal-hour-label">@h.ToString("00"):00</div>
+            }
+        </div>
+
+        @foreach (var day in Model.Days)
+        {
+            var dayAppointments = Model.Appointments.Where(a => a.StartsAt.Date == day && a.BlocksCalendar).ToList();
+            <div class="cal-day @(day < Model.Today ? "is-past" : "")" data-date="@day.ToString("yyyy-MM-dd")" data-vet="@Model.VeterinarianId">
+                @for (var h = 0; h < hours * 2; h++)
+                {
+                    <a class="cal-slot" title="Book @day.ToString("ddd d MMM") @((CalendarViewModel.FirstHour + h / 2).ToString("00")):@(h % 2 == 0 ? "00" : "30")"
+                       asp-action="Create" asp-route-date="@day.ToString("yyyy-MM-dd")"
+                       asp-route-time="@((CalendarViewModel.FirstHour + h / 2).ToString("00")):@(h % 2 == 0 ? "00" : "30")"
+                       asp-route-vetId="@Model.VeterinarianId"></a>
+                }
+                @foreach (var a in dayAppointments)
+                {
+                    var top = (a.StartsAt.TimeOfDay.TotalMinutes - CalendarViewModel.FirstHour * 60) * px / 60.0;
+                    var height = Math.Max(22, a.Duration.TotalMinutes * px / 60.0 - 2);
+                    <a class="cal-event status-@a.Status.ToString().ToLowerInvariant()"
+                       style="top:@(top.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture))px; height:@(height.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture))px; --vet:@a.Veterinarian.CalendarColor"
+                       asp-action="Details" asp-route-id="@a.Id"
+                       title="@Ui.Time(a.StartsAt)–@Ui.Time(a.EndsAt) · @a.Patient.Name (@a.Patient.Owner.FullName) · @a.Type.DisplayName() · @a.Veterinarian.DisplayName">
+                        <span class="ev-time">@Ui.Time(a.StartsAt)</span>
+                        <span class="ev-title">@a.Patient.Name</span>
+                        <span class="ev-sub">@a.Type.DisplayName()</span>
+                    </a>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<div class="legend mt-3 small text-muted">
+    <span><span class="legend-box status-scheduled"></span> Scheduled</span>
+    <span><span class="legend-box status-checkedin"></span> Checked in</span>
+    <span><span class="legend-box status-inprogress"></span> In progress</span>
+    <span><span class="legend-box status-completed"></span> Completed</span>
+    <span>Click an empty slot to book. Cancelled and no-show appointments are hidden.</span>
+</div>

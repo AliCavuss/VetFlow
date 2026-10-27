@@ -1,0 +1,73 @@
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    string Active(params string[] names) => names.Any(n => string.Equals(controller, n, StringComparison.OrdinalIgnoreCase)) ? "active" : "";
+    var signedIn = User.Identity?.IsAuthenticated == true;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] · VetFlow</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+@if (signedIn)
+{
+    <div class="shell">
+        <aside class="sidebar">
+            <a class="brand" asp-controller="Dashboard" asp-action="Index">
+                <span class="brand-mark"><i class="bi bi-plus-lg"></i></span>
+                <span>Vet<strong>Flow</strong></span>
+            </a>
+            <nav class="nav flex-column">
+                <a class="nav-link @Active("Dashboard")" asp-controller="Dashboard" asp-action="Index"><i class="bi bi-grid-1x2"></i> Today</a>
+                <a class="nav-link @Active("Appointments")" asp-controller="Appointments" asp-action="Index"><i class="bi bi-calendar-week"></i> Calendar</a>
+                <a class="nav-link @Active("Patients", "Visits")" asp-controller="Patients" asp-action="Index"><i class="bi bi-clipboard2-pulse"></i> Patients</a>
+                <a class="nav-link @Active("Owners")" asp-controller="Owners" asp-action="Index"><i class="bi bi-people"></i> Owners</a>
+                <a class="nav-link @Active("Vaccinations")" asp-controller="Vaccinations" asp-action="Index"><i class="bi bi-shield-check"></i> Vaccinations</a>
+                <a class="nav-link @Active("Invoices")" asp-controller="Invoices" asp-action="Index"><i class="bi bi-receipt"></i> Invoices</a>
+                <a class="nav-link @Active("Inventory")" asp-controller="Inventory" asp-action="Index"><i class="bi bi-box-seam"></i> Inventory</a>
+                @if (User.IsAdmin())
+                {
+                    <a class="nav-link @Active("Reports")" asp-controller="Reports" asp-action="Index"><i class="bi bi-bar-chart-line"></i> Reports</a>
+                }
+            </nav>
+            <div class="sidebar-user">
+                <div class="avatar">@Ui.Initials(User.Identity?.Name ?? "U")</div>
+                <div class="min-w-0">
+                    <div class="small fw-semibold text-truncate">@(User.Identity?.Name)</div>
+                    <form asp-controller="Account" asp-action="Logout" method="post">
+                        <button type="submit" class="btn btn-link btn-sm p-0 text-muted">Sign out</button>
+                    </form>
+                </div>
+            </div>
+        </aside>
+
+        <div class="main">
+            <header class="topbar">
+                <form asp-controller="Patients" asp-action="Index" method="get" class="search" role="search">
+                    <i class="bi bi-search"></i>
+                    <input type="search" name="q" class="form-control" placeholder="Search patient, owner or microchip…" aria-label="Search patients" />
+                </form>
+                <a class="btn btn-primary" asp-controller="Appointments" asp-action="Create"><i class="bi bi-calendar-plus"></i> <span class="d-none d-sm-inline">New appointment</span></a>
+            </header>
+            <main class="content">
+                <partial name="_Alerts" />
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+}
+else
+{
+    <main class="auth">@RenderBody()</main>
+}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,34 @@
+@model PagedResult<OwnerListItem>
+@{ ViewData["Title"] = "Owners"; }
+<div class="page-head">
+    <div><h1>Owners</h1><p class="text-muted mb-0">Clients of the clinic and their animals.</p></div>
+    <a class="btn btn-primary" asp-action="Create"><i class="bi bi-person-plus"></i> New owner</a>
+</div>
+<form method="get" class="filter-bar">
+    <input class="form-control" name="q" value="@ViewBag.Query" placeholder="Name, phone, pet name or microchip" aria-label="Search owners" />
+    <button class="btn btn-outline-primary" type="submit"><i class="bi bi-search"></i> Search</button>
+</form>
+<section class="panel p-0">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead><tr><th>Owner</th><th>Phone</th><th>Patients</th><th>SMS</th><th>Client since</th></tr></thead>
+            <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="5" class="empty-state">No owners found.</td></tr>
+            }
+            @foreach (var o in Model.Items)
+            {
+                <tr>
+                    <td><a class="fw-semibold" asp-action="Details" asp-route-id="@o.Id">@o.FullName</a><div class="small text-muted">@o.Email</div></td>
+                    <td class="text-nowrap">@Ui.Phone(o.Phone)</td>
+                    <td>@string.Join(", ", o.PatientNames)</td>
+                    <td>@if (o.ReminderConsent) { <i class="bi bi-check-circle text-success" title="Consent given"></i> } else { <i class="bi bi-dash-circle text-muted" title="No consent"></i> }</td>
+                    <td class="small text-muted">@Ui.Date(o.CreatedAt)</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</section>
+<partial name="_Pager" model="Model" />

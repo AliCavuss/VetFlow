@@ -1,0 +1,8 @@
+@model Patient
+@if (!string.IsNullOrWhiteSpace(Model.Allergies))
+{
+    <div class="allergy-alert" role="alert">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <div><strong>Allergy / intolerance:</strong> @Model.Allergies</div>
+    </div>
+}

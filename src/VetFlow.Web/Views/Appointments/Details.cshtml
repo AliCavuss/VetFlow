@@ -1,0 +1,65 @@
+@model Appointment
+@{
+    ViewData["Title"] = $"Appointment · {Model.Patient.Name}";
+    DateTime now = ViewBag.Now;
+}
+<nav class="crumbs"><a asp-action="Index" asp-route-date="@Model.StartsAt.ToString("yyyy-MM-dd")">Calendar</a> / Appointment</nav>
+<div class="page-head">
+    <div>
+        <div class="eyebrow">@Model.StartsAt.ToString("dddd d MMMM yyyy") · @Ui.Time(Model.StartsAt)–@Ui.Time(Model.EndsAt)</div>
+        <h1>@Model.Type.DisplayName() – @Model.Patient.Name</h1>
+    </div>
+    <span class="badge fs-6 @Ui.AppointmentBadge(Model.Status)">@Model.Status.DisplayName()</span>
+</div>
+
+<partial name="_AllergyAlert" model="Model.Patient" />
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <section class="panel">
+            <dl class="facts">
+                <dt>Patient</dt><dd><a asp-controller="Patients" asp-action="Details" asp-route-id="@Model.PatientId">@Model.Patient.Name</a> · @Model.Patient.Species @(Model.Patient.Breed is null ? "" : "· " + Model.Patient.Breed)</dd>
+                <dt>Owner</dt><dd><a asp-controller="Owners" asp-action="Details" asp-route-id="@Model.Patient.OwnerId">@Model.Patient.Owner.FullName</a> · @Ui.Phone(Model.Patient.Owner.Phone)</dd>
+                <dt>Veterinarian</dt><dd><span class="dot" style="background:@Model.Veterinarian.CalendarColor"></span> @Model.Veterinarian.DisplayName</dd>
+                <dt>Reason</dt><dd>@(Model.Reason ?? "—")</dd>
+                <dt>Booked</dt><dd>@Ui.DateAndTime(Model.CreatedAt) by @Model.CreatedBy</dd>
+                @if (Model.CheckedInAt.HasValue)
+                {
+                    <dt>Checked in</dt><dd>@Ui.DateAndTime(Model.CheckedInAt)</dd>
+                }
+                @if (Model.CancellationReason is not null)
+                {
+                    <dt>Cancellation</dt><dd>@Model.CancellationReason</dd>
+                }
+            </dl>
+        </section>
+    </div>
+    <div class="col-lg-5">
+        <section class="panel">
+            <div class="panel-head"><h2>Actions</h2></div>
+            <div class="d-grid gap-2">
+                <partial name="_AppointmentActions" model="Model" />
+                @if (Model.Status == AppointmentStatus.Scheduled)
+                {
+                    <a class="btn btn-outline-secondary" asp-action="Edit" asp-route-id="@Model.Id"><i class="bi bi-pencil"></i> Reschedule / edit</a>
+                    if (now > Model.StartsAt)
+                    {
+                        <form asp-action="NoShow" asp-route-id="@Model.Id" method="post" class="d-grid">
+                            <button class="btn btn-outline-danger" type="submit"><i class="bi bi-person-x"></i> Mark as no-show</button>
+                        </form>
+                    }
+                }
+                @if (Model.Status is AppointmentStatus.Scheduled or AppointmentStatus.CheckedIn)
+                {
+                    <form asp-action="Cancel" asp-route-id="@Model.Id" method="post" class="cancel-form">
+                        <label class="form-label small" for="reason">Cancel with reason</label>
+                        <div class="input-group">
+                            <input class="form-control" id="reason" name="reason" maxlength="300" placeholder="e.g. Owner called" />
+                            <button class="btn btn-outline-danger" type="submit">Cancel appointment</button>
+                        </div>
+                    </form>
+                }
+            </div>
+        </section>
+    </div>
+</div>

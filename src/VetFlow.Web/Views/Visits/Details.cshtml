@@ -1,0 +1,150 @@
+@model VisitViewModel
+@{
+    var v = Model.Visit;
+    var p = v.Patient;
+    var canEdit = v.IsOpen && User.IsClinical();
+    ViewData["Title"] = $"Visit · {p.Name}";
+}
+<nav class="crumbs"><a asp-controller="Patients" asp-action="Details" asp-route-id="@p.Id">@p.Name</a> / Visit @Ui.Date(v.StartedAt)</nav>
+<div class="page-head">
+    <div>
+        <div class="eyebrow">@Ui.DateAndTime(v.StartedAt) · @v.Veterinarian.DisplayName</div>
+        <h1>@p.Name <span class="text-muted fw-normal">– @p.Species, @(p.Breed ?? "unknown breed"), @p.Age(v.StartedAt)</span></h1>
+        <div class="small">Owner <a asp-controller="Owners" asp-action="Details" asp-route-id="@p.OwnerId">@p.Owner.FullName</a> · @Ui.Phone(p.Owner.Phone)</div>
+    </div>
+    <div class="d-flex gap-2 align-items-center">
+        @if (v.IsOpen)
+        {
+            <span class="badge fs-6 badge-soft-info">In progress</span>
+        }
+        else
+        {
+            <span class="badge fs-6 badge-soft-success">Closed @Ui.DateAndTime(v.ClosedAt)</span>
+        }
+        @if (Model.Details.InvoiceId.HasValue)
+        {
+            <a class="btn btn-outline-secondary" asp-controller="Invoices" asp-action="Details" asp-route-id="@Model.Details.InvoiceId"><i class="bi bi-receipt"></i> Invoice</a>
+        }
+    </div>
+</div>
+
+<partial name="_AllergyAlert" model="p" />
+
+<div class="row g-4">
+    <div class="col-xl-7">
+        <section class="panel">
+            <div class="panel-head"><h2>Examination (SOAP)</h2>@if (!canEdit) { <span class="small text-muted">read-only</span> }</div>
+            <form asp-action="SaveNotes" asp-route-id="@v.Id" method="post">
+                <fieldset disabled="@(!canEdit)">
+                    <div class="row g-3 mb-1">
+                        <div class="col-4"><label asp-for="Notes.WeightKg" class="form-label small"></label><input asp-for="Notes.WeightKg" class="form-control" step="0.01" /></div>
+                        <div class="col-4"><label asp-for="Notes.TemperatureC" class="form-label small"></label><input asp-for="Notes.TemperatureC" class="form-control" step="0.1" /></div>
+                        <div class="col-4"><label asp-for="Notes.HeartRate" class="form-label small"></label><input asp-for="Notes.HeartRate" class="form-control" /></div>
+                    </div>
+                    <div class="soap">
+                        <div><label asp-for="Notes.Subjective" class="form-label"></label><textarea asp-for="Notes.Subjective" class="form-control" rows="2"></textarea></div>
+                        <div><label asp-for="Notes.Objective" class="form-label"></label><textarea asp-for="Notes.Objective" class="form-control" rows="3"></textarea></div>
+                        <div><label asp-for="Notes.Assessment" class="form-label"></label><textarea asp-for="Notes.Assessment" class="form-control" rows="2"></textarea></div>
+                        <div><label asp-for="Notes.Plan" class="form-label"></label><textarea asp-for="Notes.Plan" class="form-control" rows="3"></textarea></div>
+                    </div>
+                    @if (canEdit)
+                    {
+                        <button class="btn btn-outline-primary mt-3" type="submit"><i class="bi bi-save"></i> Save notes</button>
+                    }
+                </fieldset>
+            </form>
+        </section>
+    </div>
+
+    <div class="col-xl-5 d-flex flex-column gap-4">
+        <section class="panel" id="items">
+            <div class="panel-head"><h2>Treatments &amp; products</h2><span class="fw-semibold">@Ui.Money(v.NetTotal) <span class="small text-muted fw-normal">net</span></span></div>
+            <ul class="plain-list">
+                @if (v.Items.Count == 0)
+                {
+                    <li class="text-muted">Nothing added yet.</li>
+                }
+                @foreach (var item in v.Items)
+                {
+                    <li>
+                        <div class="min-w-0">
+                            <div>@item.Description</div>
+                            <div class="small text-muted">@Ui.Quantity(item.Quantity) @item.Product.Unit × @Ui.Money(item.UnitPrice)</div>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span>@Ui.Money(item.NetAmount)</span>
+                            @if (canEdit)
+                            {
+                                <form asp-action="RemoveItem" asp-route-id="@v.Id" method="post">
+                                    <input type="hidden" name="itemId" value="@item.Id" />
+                                    <button class="btn btn-sm btn-link text-danger p-0" type="submit" aria-label="Remove @item.Description"><i class="bi bi-x-circle"></i></button>
+                                </form>
+                            }
+                        </div>
+                    </li>
+                }
+            </ul>
+            @if (canEdit)
+            {
+                <form asp-action="AddItem" asp-route-id="@v.Id" method="post" class="add-row">
+                    <select name="productId" class="form-select" aria-label="Product or service" required>
+                        <option value="">Add service or product…</option>
+                        @foreach (var group in Model.Products.GroupBy(x => x.Category))
+                        {
+                            <optgroup label="@group.Key">
+                                @foreach (var prod in group)
+                                {
+                                    <option value="@prod.Id">@prod.Name – @Ui.Money(prod.UnitPrice)@(prod.TracksStock ? $" ({Ui.Quantity(prod.StockQuantity)} in stock)" : "")</option>
+                                }
+                            </optgroup>
+                        }
+                    </select>
+                    <input type="number" name="quantity" value="1" min="0.001" step="any" class="form-control qty" aria-label="Quantity" required />
+                    <button class="btn btn-outline-primary" type="submit"><i class="bi bi-plus-lg"></i></button>
+                </form>
+                <div class="form-text">Stock is deducted immediately and restored if the line is removed.</div>
+            }
+        </section>
+
+        <section class="panel" id="vaccinations">
+            <div class="panel-head"><h2>Vaccinations given</h2></div>
+            <ul class="plain-list">
+                @if (Model.Details.Vaccinations.Count == 0)
+                {
+                    <li class="text-muted">None in this visit.</li>
+                }
+                @foreach (var vac in Model.Details.Vaccinations)
+                {
+                    <li>
+                        <div><div class="fw-semibold">@vac.VaccineType.Name</div><div class="small text-muted">Batch @(vac.BatchNumber ?? "—")</div></div>
+                        <div class="small text-end">Next due<br /><strong>@Ui.Date(vac.NextDueOn)</strong></div>
+                    </li>
+                }
+            </ul>
+            @if (canEdit && Model.VaccineTypes.Count > 0)
+            {
+                <form asp-action="AddVaccination" asp-route-id="@v.Id" method="post" class="add-row">
+                    <select name="vaccineTypeId" class="form-select" aria-label="Vaccine" required>
+                        @foreach (var t in Model.VaccineTypes)
+                        {
+                            <option value="@t.Id">@t.Name (every @t.IntervalDays days)</option>
+                        }
+                    </select>
+                    <input name="batchNumber" class="form-control qty" placeholder="Batch" maxlength="40" aria-label="Batch number" />
+                    <button class="btn btn-outline-primary" type="submit"><i class="bi bi-plus-lg"></i></button>
+                </form>
+            }
+        </section>
+
+        @if (canEdit)
+        {
+            <section class="panel panel-accent">
+                <h2 class="h6">Finish the visit</h2>
+                <p class="small text-muted">Closing locks the record, completes the appointment and creates a draft invoice from the lines above. An assessment (diagnosis) is required.</p>
+                <form asp-action="Close" asp-route-id="@v.Id" method="post">
+                    <button class="btn btn-primary w-100" type="submit"><i class="bi bi-check2-circle"></i> Close visit &amp; create invoice</button>
+                </form>
+            </section>
+        }
+    </div>
+</div>

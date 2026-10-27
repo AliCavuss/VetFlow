@@ -1,0 +1,23 @@
+@model Appointment
+@{
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
+}
+<div class="d-flex gap-1 flex-wrap justify-content-end">
+    @if (Model.Status == AppointmentStatus.Scheduled)
+    {
+        <form asp-controller="Appointments" asp-action="CheckIn" asp-route-id="@Model.Id" method="post">
+            <input type="hidden" name="returnUrl" value="@returnUrl" />
+            <button class="btn btn-sm btn-outline-primary" type="submit"><i class="bi bi-door-open"></i> Check in</button>
+        </form>
+    }
+    @if (User.IsClinical() && Model.Status is AppointmentStatus.Scheduled or AppointmentStatus.CheckedIn)
+    {
+        <form asp-controller="Appointments" asp-action="StartVisit" asp-route-id="@Model.Id" method="post">
+            <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-play-fill"></i> Start exam</button>
+        </form>
+    }
+    @if (Model.VisitId.HasValue)
+    {
+        <a class="btn btn-sm btn-outline-secondary" asp-controller="Visits" asp-action="Details" asp-route-id="@Model.VisitId"><i class="bi bi-clipboard2-pulse"></i> Record</a>
+    }
+</div>

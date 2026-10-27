@@ -1,0 +1,110 @@
+@model InvoiceDetailsViewModel
+@{
+    var i = Model.Invoice;
+    DateTime today = ViewBag.Today;
+    ViewData["Title"] = i.Number ?? $"Draft invoice #{i.Id}";
+    var canBill = User.IsBilling();
+    ViewData["Editable"] = canBill;
+}
+<nav class="crumbs"><a asp-action="Index">Invoices</a> / @ViewData["Title"]</nav>
+<div class="page-head">
+    <div>
+        <div class="eyebrow">@(i.IssuedAt.HasValue ? $"Issued {Ui.Date(i.IssuedAt)} · due {Ui.Date(i.DueDate)}" : $"Created {Ui.Date(i.CreatedAt)}")</div>
+        <h1 class="font-monospace">@ViewData["Title"]</h1>
+        <div>For <a asp-controller="Owners" asp-action="Details" asp-route-id="@i.OwnerId">@i.Owner.FullName</a>
+            @if (i.Visit is not null)
+            {
+                <span>· visit of <a asp-controller="Visits" asp-action="Details" asp-route-id="@i.VisitId">@i.Visit.Patient.Name on @Ui.Date(i.Visit.StartedAt)</a></span>
+            }
+        </div>
+    </div>
+    <div class="d-flex gap-2 align-items-center flex-wrap">
+        <span class="badge fs-6 @Ui.InvoiceBadge(i.Status)">@i.Status.DisplayName()</span>
+        @if (i.IsOverdue(today)) { <span class="badge fs-6 badge-soft-danger">Overdue</span> }
+        @if (i.Number is not null)
+        {
+            <a class="btn btn-outline-secondary" asp-action="Print" asp-route-id="@i.Id" target="_blank"><i class="bi bi-printer"></i> Print / PDF</a>
+        }
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-xl-8">
+        <section class="panel">
+            <partial name="_InvoiceBody" model="i" view-data="ViewData" />
+        </section>
+    </div>
+    <div class="col-xl-4 d-flex flex-column gap-4">
+        @if (canBill && i.Status == InvoiceStatus.Draft)
+        {
+            <section class="panel">
+                <h2 class="h6">Add product or service</h2>
+                <form asp-action="AddProduct" asp-route-id="@i.Id" method="post" class="add-row">
+                    <select name="productId" class="form-select" required aria-label="Product">
+                        <option value="">Choose…</option>
+                        @foreach (var p in Model.Products)
+                        {
+                            <option value="@p.Id">@p.Name – @Ui.Money(p.UnitPrice)</option>
+                        }
+                    </select>
+                    <input type="number" name="quantity" class="form-control qty" value="1" min="0.001" step="any" required aria-label="Quantity" />
+                    <button class="btn btn-outline-primary" type="submit"><i class="bi bi-plus-lg"></i></button>
+                </form>
+                <h2 class="h6 mt-3">Custom line</h2>
+                <form asp-action="AddCustom" asp-route-id="@i.Id" method="post" class="d-grid gap-2">
+                    <input name="description" class="form-control" placeholder="Description" required maxlength="150" aria-label="Description" />
+                    <div class="d-flex gap-2">
+                        <input type="number" name="quantity" class="form-control" value="1" min="0.001" step="any" required aria-label="Quantity" />
+                        <input type="number" name="unitPrice" class="form-control" placeholder="Net price" min="0" step="0.01" required aria-label="Net unit price" />
+                        <select name="vatPercent" class="form-select" aria-label="VAT"><option value="20">20 %</option><option value="10">10 %</option><option value="1">1 %</option><option value="0">0 %</option></select>
+                    </div>
+                    <button class="btn btn-outline-primary" type="submit">Add line</button>
+                </form>
+                <h2 class="h6 mt-3">Discount</h2>
+                <form asp-action="Discount" asp-route-id="@i.Id" method="post" class="add-row">
+                    <input type="number" name="percent" class="form-control" min="0" max="50" step="0.5" value="@((i.DiscountRate * 100).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))" aria-label="Discount percent" />
+                    <span class="align-self-center">%</span>
+                    <button class="btn btn-outline-secondary" type="submit">Apply</button>
+                </form>
+            </section>
+            <section class="panel panel-accent">
+                <p class="small text-muted mb-2">Issuing assigns the invoice number and locks the lines. Payment term: 14 days.</p>
+                <form asp-action="Issue" asp-route-id="@i.Id" method="post" class="d-grid"><button class="btn btn-primary" type="submit"><i class="bi bi-send-check"></i> Issue invoice</button></form>
+            </section>
+        }
+
+        @if (canBill && i.Status is InvoiceStatus.Issued or InvoiceStatus.PartiallyPaid)
+        {
+            <section class="panel panel-accent">
+                <h2 class="h6">Register payment</h2>
+                <form asp-action="Pay" asp-route-id="@i.Id" method="post" class="d-grid gap-2">
+                    <div class="input-group">
+                        <input type="number" name="amount" class="form-control" value="@i.Balance.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)" min="0.01" max="@i.Balance.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)" step="0.01" required aria-label="Amount" />
+                        <span class="input-group-text">₺</span>
+                    </div>
+                    <select name="method" class="form-select" asp-items="Ui.EnumOptions<PaymentMethod>(PaymentMethod.CreditCard)" aria-label="Payment method"></select>
+                    <input name="reference" class="form-control" placeholder="Reference (POS slip, transfer no.)" maxlength="100" aria-label="Reference" />
+                    <button class="btn btn-success" type="submit"><i class="bi bi-cash-coin"></i> Register payment</button>
+                </form>
+            </section>
+        }
+
+        @if (i.Payments.Count > 0)
+        {
+            <section class="panel">
+                <h2 class="h6">Payments</h2>
+                <ul class="plain-list">
+                    @foreach (var pay in i.Payments.OrderBy(x => x.PaidAt))
+                    {
+                        <li><span class="small">@Ui.DateAndTime(pay.PaidAt) · @pay.Method.DisplayName()</span><strong>@Ui.Money(pay.Amount)</strong></li>
+                    }
+                </ul>
+            </section>
+        }
+
+        @if (canBill && i.Payments.Count == 0 && i.Status is InvoiceStatus.Draft or InvoiceStatus.Issued)
+        {
+            <form asp-action="Cancel" asp-route-id="@i.Id" method="post"><button class="btn btn-link text-danger p-0" type="submit">Cancel this invoice</button></form>
+        }
+    </div>
+</div>

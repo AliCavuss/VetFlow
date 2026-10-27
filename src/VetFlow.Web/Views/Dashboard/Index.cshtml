@@ -1,0 +1,136 @@
+@model DashboardSummary
+@{
+    ViewData["Title"] = "Today";
+    var vets = (IReadOnlyList<Veterinarian>)ViewBag.Veterinarians;
+    int? vetId = ViewBag.VetId;
+    var waiting = Model.TodayAppointments.Where(a => a.Status == AppointmentStatus.CheckedIn).ToList();
+    var active = Model.TodayAppointments.Where(a => a.BlocksCalendar).ToList();
+}
+<div class="page-head">
+    <div>
+        <div class="eyebrow">@Model.Today.ToString("dddd, d MMMM yyyy")</div>
+        <h1>Today at the clinic</h1>
+    </div>
+    <div class="chip-group" role="group" aria-label="Filter by veterinarian">
+        <a class="chip @(vetId is null ? "active" : "")" asp-action="Index" asp-route-vetId="0">All vets</a>
+        @foreach (var v in vets)
+        {
+            <a class="chip @(vetId == v.Id ? "active" : "")" asp-action="Index" asp-route-vetId="@v.Id">
+                <span class="dot" style="background:@v.CalendarColor"></span>@v.DisplayName
+            </a>
+        }
+    </div>
+</div>
+
+<div class="kpi-row">
+    <div class="kpi">
+        <div class="kpi-label">Appointments today</div>
+        <div class="kpi-value">@active.Count</div>
+        <div class="kpi-sub">@waiting.Count waiting · @Model.OpenVisits.Count in exam</div>
+    </div>
+    <div class="kpi">
+        <div class="kpi-label">Collected today</div>
+        <div class="kpi-value">@Ui.Money(Model.RevenueToday)</div>
+        <div class="kpi-sub">This month @Ui.Money(Model.RevenueThisMonth)</div>
+    </div>
+    <a class="kpi kpi-link" asp-controller="Invoices" asp-action="Index" asp-route-UnpaidOnly="true">
+        <div class="kpi-label">Outstanding</div>
+        <div class="kpi-value">@Ui.Money(Model.Outstanding)</div>
+        <div class="kpi-sub @(Model.OverdueInvoices > 0 ? "text-danger fw-semibold" : "")">@Model.OverdueInvoices overdue invoice(s)</div>
+    </a>
+    <a class="kpi kpi-link" asp-controller="Vaccinations" asp-action="Index" asp-route-days="14">
+        <div class="kpi-label">Boosters due (14 days)</div>
+        <div class="kpi-value">@Model.VaccinationsDue.Count</div>
+        <div class="kpi-sub">@Model.LowStock.Count product(s) low on stock</div>
+    </a>
+</div>
+
+<div class="row g-4">
+    <div class="col-xl-7">
+        <section class="panel">
+            <div class="panel-head">
+                <h2>Schedule</h2>
+                <a class="small" asp-controller="Appointments" asp-action="Index">Open calendar →</a>
+            </div>
+            @if (Model.TodayAppointments.Count == 0)
+            {
+                <div class="empty-state">No appointments today.</div>
+            }
+            else
+            {
+                <ul class="schedule">
+                    @foreach (var a in Model.TodayAppointments)
+                    {
+                        <li class="@(a.BlocksCalendar ? "" : "is-void")">
+                            <div class="time">@Ui.Time(a.StartsAt)<span>@((int)a.Duration.TotalMinutes) min</span></div>
+                            <div class="vet-bar" style="background:@a.Veterinarian.CalendarColor" title="@a.Veterinarian.DisplayName"></div>
+                            <div class="who min-w-0">
+                                <a class="fw-semibold" asp-controller="Patients" asp-action="Details" asp-route-id="@a.PatientId">@a.Patient.Name</a>
+                                <span class="text-muted small">· @a.Patient.Species · @a.Patient.Owner.FullName</span>
+                                <div class="small text-muted text-truncate">@a.Type.DisplayName()@(a.Reason is null ? "" : " – " + a.Reason)</div>
+                            </div>
+                            <span class="badge @Ui.AppointmentBadge(a.Status)">@a.Status.DisplayName()</span>
+                            <partial name="_AppointmentActions" model="a" />
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+    </div>
+
+    <div class="col-xl-5 d-flex flex-column gap-4">
+        <section class="panel">
+            <div class="panel-head"><h2>Payments – last 30 days</h2></div>
+            <div class="chart-box"><canvas id="revenue-chart" aria-label="Payments per day"></canvas></div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-head"><h2>Boosters due soon</h2><a class="small" asp-controller="Vaccinations" asp-action="Index">All →</a></div>
+            <ul class="plain-list">
+                @if (Model.VaccinationsDue.Count == 0)
+                {
+                    <li class="text-muted">Nothing due in the next 14 days.</li>
+                }
+                @foreach (var v in Model.VaccinationsDue)
+                {
+                    var overdue = v.NextDueOn < Model.Today;
+                    <li>
+                        <div class="min-w-0">
+                            <a asp-controller="Patients" asp-action="Details" asp-route-id="@v.PatientId" class="fw-semibold">@v.PatientName</a>
+                            <span class="small text-muted">· @v.VaccineName</span>
+                        </div>
+                        <span class="badge @(overdue ? "badge-soft-danger" : "badge-soft-warning")">@(overdue ? "Overdue " : "Due ")@Ui.Date(v.NextDueOn)</span>
+                    </li>
+                }
+            </ul>
+        </section>
+
+        <section class="panel">
+            <div class="panel-head"><h2>Low stock</h2><a class="small" asp-controller="Inventory" asp-action="Index" asp-route-low="true">Inventory →</a></div>
+            <ul class="plain-list">
+                @if (Model.LowStock.Count == 0)
+                {
+                    <li class="text-muted">All products above their reorder level.</li>
+                }
+                @foreach (var p in Model.LowStock)
+                {
+                    <li>
+                        <a asp-controller="Inventory" asp-action="Details" asp-route-id="@p.Id">@p.Name</a>
+                        <span class="small"><strong class="text-danger">@Ui.Quantity(p.StockQuantity)</strong> / min @Ui.Quantity(p.ReorderLevel) @p.Unit</span>
+                    </li>
+                }
+            </ul>
+        </section>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+    <script>
+        window.vetflowRevenue = {
+            labels: @Json.Serialize(Model.Revenue30Days.Select(d => d.Day.ToString("dd.MM"))),
+            values: @Json.Serialize(Model.Revenue30Days.Select(d => d.Amount))
+        };
+    </script>
+    <script src="~/js/dashboard.js" asp-append-version="true"></script>
+}

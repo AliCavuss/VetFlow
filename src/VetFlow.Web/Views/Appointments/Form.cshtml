@@ -1,0 +1,66 @@
+@model AppointmentFormModel
+@{
+    var isEdit = Model.Id.HasValue;
+    ViewData["Title"] = isEdit ? "Edit appointment" : "New appointment";
+}
+<nav class="crumbs"><a asp-action="Index">Calendar</a> / @ViewData["Title"]</nav>
+<div class="page-head"><div><h1>@ViewData["Title"]</h1><p class="text-muted mb-0">Free slots are calculated from the clinic hours (Mon–Sat 09:00–19:00) and the veterinarian's calendar.</p></div></div>
+
+<section class="panel form-panel">
+    <form asp-action="@(isEdit ? "Edit" : "Create")" asp-route-id="@Model.Id" method="post" id="appointment-form" data-ignore-id="@Model.Id">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+        <div class="row g-3">
+            <div class="col-md-7 position-relative">
+                <label class="form-label" for="patient-search">Patient</label>
+                <input type="hidden" asp-for="PatientId" />
+                <input class="form-control" id="patient-search" autocomplete="off" placeholder="Type pet or owner name…" value="@Model.PatientLabel" />
+                <div class="autocomplete list-group" id="patient-results" hidden></div>
+                <span asp-validation-for="PatientId" class="text-danger small"></span>
+                <div class="form-text">Not registered yet? <a asp-controller="Owners" asp-action="Create">Add owner &amp; patient</a></div>
+            </div>
+            <div class="col-md-5">
+                <label asp-for="Type" class="form-label"></label>
+                <select asp-for="Type" asp-items="Ui.EnumOptions<AppointmentType>(Model.Type)" class="form-select" id="type"></select>
+            </div>
+            <div class="col-md-7">
+                <label asp-for="VeterinarianId" class="form-label"></label>
+                <select asp-for="VeterinarianId" asp-items="Model.VeterinarianOptions" class="form-select" id="vet">
+                    <option value="0">— select —</option>
+                </select>
+                <span asp-validation-for="VeterinarianId" class="text-danger small"></span>
+            </div>
+            <div class="col-md-5">
+                <label asp-for="DurationMinutes" class="form-label"></label>
+                <input asp-for="DurationMinutes" class="form-control" id="duration" step="5" />
+                <span asp-validation-for="DurationMinutes" class="text-danger small"></span>
+            </div>
+            <div class="col-md-5">
+                <label asp-for="Date" class="form-label"></label>
+                <input asp-for="Date" class="form-control" id="date" />
+                <span asp-validation-for="Date" class="text-danger small"></span>
+            </div>
+            <div class="col-md-7">
+                <label asp-for="Time" class="form-label"></label>
+                <input type="hidden" asp-for="Time" id="time" />
+                <div class="slots" id="slots" aria-live="polite"><span class="text-muted small">Select a veterinarian and a date to see free times.</span></div>
+                <span asp-validation-for="Time" class="text-danger small"></span>
+            </div>
+            <div class="col-12">
+                <label asp-for="Reason" class="form-label"></label>
+                <input asp-for="Reason" class="form-control" placeholder="e.g. Limping since Monday" />
+            </div>
+        </div>
+        <div class="mt-4 d-flex gap-2">
+            <button class="btn btn-primary" type="submit"><i class="bi bi-check-lg"></i> @(isEdit ? "Save changes" : "Book appointment")</button>
+            <a class="btn btn-outline-secondary" asp-action="@(isEdit ? "Details" : "Index")" asp-route-id="@Model.Id">Cancel</a>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        window.vetflowDurations = @Json.Serialize(Enum.GetValues<AppointmentType>().ToDictionary(t => t.ToString(), t => t.DefaultDurationMinutes()));
+    </script>
+    <script src="~/js/appointment-form.js" asp-append-version="true"></script>
+}

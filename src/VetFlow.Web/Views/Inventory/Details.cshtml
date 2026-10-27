@@ -1,0 +1,73 @@
+@model ProductDetails
+@{
+    var p = Model.Product;
+    ViewData["Title"] = p.Name;
+}
+<nav class="crumbs"><a asp-action="Index">Inventory</a> / @p.Name</nav>
+<div class="page-head">
+    <div>
+        <div class="eyebrow font-monospace">@p.Sku · @p.Category</div>
+        <h1>@p.Name @if (!p.IsActive) { <span class="badge badge-soft-secondary align-middle">Inactive</span> }</h1>
+    </div>
+    @if (User.IsAdmin())
+    {
+        <a class="btn btn-outline-secondary" asp-action="Edit" asp-route-id="@p.Id"><i class="bi bi-pencil"></i> Edit</a>
+    }
+</div>
+<div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Net price</div><div class="kpi-value">@Ui.Money(p.UnitPrice)</div><div class="kpi-sub">per @p.Unit</div></div>
+    <div class="kpi"><div class="kpi-label">With VAT @Ui.Percent(p.VatRate)</div><div class="kpi-value">@Ui.Money(p.GrossPrice)</div><div class="kpi-sub">price for the customer</div></div>
+    @if (p.TracksStock)
+    {
+        <div class="kpi @(p.IsLowStock ? "kpi-alert" : "")"><div class="kpi-label">In stock</div><div class="kpi-value">@Ui.Quantity(p.StockQuantity)</div><div class="kpi-sub">reorder at @Ui.Quantity(p.ReorderLevel) @p.Unit</div></div>
+    }
+</div>
+<div class="row g-4">
+    @if (p.TracksStock && User.IsAdmin())
+    {
+        <div class="col-lg-4 d-flex flex-column gap-4">
+            <section class="panel">
+                <h2 class="h6">Goods received</h2>
+                <form asp-action="Restock" asp-route-id="@p.Id" method="post" class="d-grid gap-2">
+                    <input type="number" name="quantity" class="form-control" min="0.001" step="any" placeholder="Quantity (@p.Unit)" required aria-label="Quantity received" />
+                    <input name="reference" class="form-control" placeholder="Supplier / delivery note" maxlength="150" aria-label="Reference" />
+                    <button class="btn btn-primary" type="submit"><i class="bi bi-box-arrow-in-down"></i> Add to stock</button>
+                </form>
+            </section>
+            <section class="panel">
+                <h2 class="h6">Stock-take correction</h2>
+                <form asp-action="Adjust" asp-route-id="@p.Id" method="post" class="d-grid gap-2">
+                    <input type="number" name="counted" class="form-control" min="0" step="any" value="@Ui.Quantity(p.StockQuantity)" required aria-label="Counted quantity" />
+                    <input name="reason" class="form-control" placeholder="Reason (expired, broken…)" maxlength="150" aria-label="Reason" />
+                    <button class="btn btn-outline-secondary" type="submit">Set counted quantity</button>
+                </form>
+            </section>
+        </div>
+    }
+    <div class="@(p.TracksStock && User.IsAdmin() ? "col-lg-8" : "col-12")">
+        <section class="panel p-0">
+            <div class="panel-head px-3 pt-3"><h2>Stock movements</h2></div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead><tr><th>Date</th><th>Type</th><th class="text-end">Quantity</th><th>Reference</th><th>By</th></tr></thead>
+                    <tbody>
+                    @if (Model.Movements.Count == 0)
+                    {
+                        <tr><td colspan="5" class="empty-state">@(p.TracksStock ? "No movements yet." : "Services have no stock.")</td></tr>
+                    }
+                    @foreach (var m in Model.Movements)
+                    {
+                        <tr>
+                            <td class="small text-nowrap">@Ui.DateAndTime(m.CreatedAt)</td>
+                            <td class="small">@m.Type.DisplayName()</td>
+                            <td class="text-end fw-semibold @(m.Quantity < 0 ? "text-danger" : "text-success")">@(m.Quantity > 0 ? "+" : "")@Ui.Quantity(m.Quantity)</td>
+                            <td class="small">@m.Reference</td>
+                            <td class="small text-muted">@m.CreatedBy</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</div>

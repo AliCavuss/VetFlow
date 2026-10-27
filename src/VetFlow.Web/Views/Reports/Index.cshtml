@@ -1,0 +1,76 @@
+@model ClinicReport
+@{
+    ViewData["Title"] = "Reports";
+    var last12 = Model.RevenueByMonth.Sum(m => m.Amount);
+    var salesTotal = Model.SalesByCategory.Sum(c => c.NetAmount);
+}
+<div class="page-head">
+    <div><h1>Reports</h1><p class="text-muted mb-0">Collected payments for the last 12 months; sales mix and appointments for the last 90 days.</p></div>
+</div>
+<div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Collected – 12 months</div><div class="kpi-value">@Ui.Money(last12)</div></div>
+    <div class="kpi"><div class="kpi-label">Net sales – 90 days</div><div class="kpi-value">@Ui.Money(salesTotal)</div></div>
+    <div class="kpi"><div class="kpi-label">New patients – 90 days</div><div class="kpi-value">@Model.NewPatients</div></div>
+    <div class="kpi"><div class="kpi-label">No-show rate</div><div class="kpi-value">@Ui.Percent(Math.Round(Model.NoShowRate, 3))</div><div class="kpi-sub">of finished appointments</div></div>
+</div>
+<div class="row g-4">
+    <div class="col-xl-8">
+        <section class="panel">
+            <div class="panel-head"><h2>Collected per month</h2></div>
+            <div class="chart-box"><canvas id="month-chart" aria-label="Collected per month"></canvas></div>
+        </section>
+    </div>
+    <div class="col-xl-4">
+        <section class="panel">
+            <div class="panel-head"><h2>Sales by category</h2></div>
+            <ul class="bar-list">
+                @foreach (var c in Model.SalesByCategory)
+                {
+                    var share = salesTotal == 0 ? 0 : c.NetAmount / salesTotal;
+                    <li>
+                        <div class="d-flex justify-content-between small"><span>@c.Category</span><span>@Ui.Money(c.NetAmount)</span></div>
+                        <div class="bar"><span style="width:@((share * 100).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture))%"></span></div>
+                    </li>
+                }
+            </ul>
+        </section>
+    </div>
+    <div class="col-xl-6">
+        <section class="panel p-0">
+            <div class="panel-head px-3 pt-3"><h2>Top services &amp; products</h2></div>
+            <table class="table align-middle mb-0">
+                <thead><tr><th>Item</th><th class="text-end">Qty</th><th class="text-end">Net</th></tr></thead>
+                <tbody>
+                @foreach (var t in Model.TopItems)
+                {
+                    <tr><td>@t.Description</td><td class="text-end">@Ui.Quantity(t.Quantity)</td><td class="text-end text-nowrap">@Ui.Money(t.NetAmount)</td></tr>
+                }
+                </tbody>
+            </table>
+        </section>
+    </div>
+    <div class="col-xl-6">
+        <section class="panel p-0">
+            <div class="panel-head px-3 pt-3"><h2>Appointments by type</h2></div>
+            <table class="table align-middle mb-0">
+                <thead><tr><th>Type</th><th class="text-end">Booked</th><th class="text-end">Completed</th><th class="text-end">No-shows</th></tr></thead>
+                <tbody>
+                @foreach (var a in Model.Appointments)
+                {
+                    <tr><td>@a.Type.DisplayName()</td><td class="text-end">@a.Total</td><td class="text-end">@a.Completed</td><td class="text-end @(a.NoShows > 0 ? "text-danger" : "")">@a.NoShows</td></tr>
+                }
+                </tbody>
+            </table>
+        </section>
+    </div>
+</div>
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+    <script>
+        window.vetflowMonths = {
+            labels: @Json.Serialize(Model.RevenueByMonth.Select(m => m.Label)),
+            values: @Json.Serialize(Model.RevenueByMonth.Select(m => m.Amount))
+        };
+    </script>
+    <script src="~/js/reports.js" asp-append-version="true"></script>
+}

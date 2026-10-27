@@ -1,0 +1,41 @@
+@model PagedResult<Invoice>
+@{
+    ViewData["Title"] = "Invoices";
+    InvoiceQuery q = ViewBag.Query;
+    DateTime today = ViewBag.Today;
+}
+<div class="page-head">
+    <div><h1>Invoices</h1><p class="text-muted mb-0">Created automatically when a visit is closed, or manually for counter sales from the owner's page.</p></div>
+</div>
+<form method="get" class="filter-bar">
+    <input class="form-control" name="Search" value="@q.Search" placeholder="Invoice number or owner" aria-label="Search invoices" />
+    <select class="form-select w-auto" name="Status" asp-items="Ui.EnumOptions<InvoiceStatus>(q.Status)" aria-label="Status"><option value="">All statuses</option></select>
+    <div class="form-check text-nowrap"><input class="form-check-input" type="checkbox" name="UnpaidOnly" value="true" id="unpaid" checked="@q.UnpaidOnly" /><label class="form-check-label" for="unpaid">Unpaid only</label></div>
+    <button class="btn btn-outline-primary" type="submit"><i class="bi bi-funnel"></i> Filter</button>
+</form>
+<section class="panel p-0">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead><tr><th>Number</th><th>Owner</th><th>Date</th><th>Due</th><th class="text-end">Total</th><th class="text-end">Open</th><th>Status</th></tr></thead>
+            <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="7" class="empty-state">No invoices match the filter.</td></tr>
+            }
+            @foreach (var i in Model.Items)
+            {
+                <tr>
+                    <td class="font-monospace"><a asp-action="Details" asp-route-id="@i.Id">@(i.Number ?? $"Draft #{i.Id}")</a></td>
+                    <td><a asp-controller="Owners" asp-action="Details" asp-route-id="@i.OwnerId">@i.Owner.FullName</a></td>
+                    <td class="small">@Ui.Date(i.IssuedAt ?? i.CreatedAt)</td>
+                    <td class="small @(i.IsOverdue(today) ? "text-danger fw-semibold" : "")">@Ui.Date(i.DueDate)@(i.IsOverdue(today) ? " · overdue" : "")</td>
+                    <td class="text-end text-nowrap">@Ui.Money(i.Total)</td>
+                    <td class="text-end text-nowrap">@(i.Status is InvoiceStatus.Issued or InvoiceStatus.PartiallyPaid ? Ui.Money(i.Balance) : "—")</td>
+                    <td><span class="badge @Ui.InvoiceBadge(i.Status)">@i.Status.DisplayName()</span></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</section>
+<partial name="_Pager" model="Model" />

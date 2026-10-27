@@ -1,0 +1,54 @@
+@model IReadOnlyList<Product>
+@{
+    ViewData["Title"] = "Inventory";
+    ProductCategory? category = ViewBag.Category;
+    bool low = ViewBag.Low;
+}
+<div class="page-head">
+    <div><h1>Inventory &amp; price list</h1><p class="text-muted mb-0">Services, medications, vaccines, supplies and food. Prices are net; VAT (KDV) is added on the invoice.</p></div>
+    @if (User.IsAdmin())
+    {
+        <a class="btn btn-primary" asp-action="Create"><i class="bi bi-plus-lg"></i> New product</a>
+    }
+</div>
+<form method="get" class="filter-bar">
+    <input class="form-control" name="q" value="@ViewBag.Query" placeholder="Name or SKU" aria-label="Search products" />
+    <select class="form-select w-auto" name="category" asp-items="Ui.EnumOptions<ProductCategory>(category)" aria-label="Category"><option value="">All categories</option></select>
+    <div class="form-check text-nowrap"><input class="form-check-input" type="checkbox" name="low" value="true" id="low" checked="@low" /><label class="form-check-label" for="low">Low stock only</label></div>
+    <button class="btn btn-outline-primary" type="submit"><i class="bi bi-funnel"></i> Filter</button>
+</form>
+<section class="panel p-0">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead><tr><th>Product</th><th>Category</th><th class="text-end">Net price</th><th class="text-end">VAT</th><th class="text-end">Gross</th><th class="text-end">Stock</th></tr></thead>
+            <tbody>
+            @if (Model.Count == 0)
+            {
+                <tr><td colspan="6" class="empty-state">No products match the filter.</td></tr>
+            }
+            @foreach (var p in Model)
+            {
+                <tr class="@(p.IsActive ? "" : "text-muted")">
+                    <td><a class="fw-semibold" asp-action="Details" asp-route-id="@p.Id">@p.Name</a><div class="small text-muted font-monospace">@p.Sku</div></td>
+                    <td><span class="badge badge-soft-secondary">@p.Category</span></td>
+                    <td class="text-end text-nowrap">@Ui.Money(p.UnitPrice) <span class="small text-muted">/ @p.Unit</span></td>
+                    <td class="text-end">@Ui.Percent(p.VatRate)</td>
+                    <td class="text-end text-nowrap">@Ui.Money(p.GrossPrice)</td>
+                    <td class="text-end text-nowrap">
+                        @if (!p.TracksStock)
+                        {
+                            <span class="text-muted small">service</span>
+                        }
+                        else
+                        {
+                            <span class="@(p.IsLowStock ? "text-danger fw-bold" : "")">@Ui.Quantity(p.StockQuantity)</span>
+                            <span class="small text-muted">/ min @Ui.Quantity(p.ReorderLevel)</span>
+                            @if (p.IsLowStock) { <i class="bi bi-exclamation-circle-fill text-danger" title="Reorder"></i> }
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</section>
